@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, RefreshControl, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { StyleSheet, View, RefreshControl, TouchableOpacity, Alert, ScrollView, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
@@ -92,12 +92,12 @@ export default function HomeScreen() {
       }
       
       try {
-        // Fetch blockchain data in parallel
-        const [chain, pendingTx, nodes] = await Promise.all([
-          blockchainService.getChain(),
-          blockchainService.getPendingTransactions(),
-          blockchainService.getRegisteredNodes(),
-        ]);
+        // Fetch blockchain data
+        const chain = await blockchainService.getChain();
+        const nodes = await blockchainService.getRegisteredNodes();
+        
+        // Calculate pending transactions from the latest block
+        const pendingTx = chain.length > 0 ? chain[chain.length - 1].transactions : [];
         
         // Get balance if wallet exists
         let balance = 0;
@@ -135,19 +135,19 @@ export default function HomeScreen() {
   };
 
   const handleMineBlock = async () => {
-    if (!blockchainInfo.walletAddress) {
-      Alert.alert('Error', 'Please create a wallet first');
-      return;
-    }
-
     try {
       setIsMining(true);
-      await blockchainService.mineBlock(blockchainInfo.walletAddress);
-      await fetchBlockchainData();
-      Alert.alert('Success', 'New block mined successfully!');
+      const walletAddress = await blockchainService.getWalletAddress();
+      if (!walletAddress) {
+        Alert.alert('Error', 'No wallet found. Please create a wallet first.');
+        return;
+      }
+      
+      const result = await blockchainService.mineBlock();
+      Alert.alert('Success', `Block mined! ${result.message}`);
+      fetchBlockchainData();
     } catch (error) {
-      console.error('Error mining block:', error);
-      Alert.alert('Error', 'Failed to mine block');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to mine block');
     } finally {
       setIsMining(false);
     }
@@ -158,117 +158,121 @@ export default function HomeScreen() {
   }, []);
 
   return (
-    <ScrollView 
-      style={styles.container}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={fetchBlockchainData}
-          colors={['#007AFF']}
-          tintColor="#007AFF"
-        />
-      }
-    >
-      <ThemedView style={styles.header}>
-        <ThemedText type="title" style={styles.title}>ChainLite</ThemedText>
-        <ThemedText style={styles.subtitle}>Your Personal Blockchain</ThemedText>
-        
-        {blockchainInfo.error ? (
-          <ThemedView style={styles.errorContainer}>
-            <Ionicons name="warning" size={20} color="#FF3B30" style={styles.errorIcon} />
-            <ThemedText style={styles.errorText}>{blockchainInfo.error}</ThemedText>
-          </ThemedView>
-        ) : (
-          <>
-            {blockchainInfo.walletAddress && (
-              <ThemedText style={styles.walletAddress} numberOfLines={1} ellipsizeMode="middle">
-                {blockchainInfo.walletAddress}
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView 
+        style={styles.container}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={fetchBlockchainData}
+          />
+        }
+      >
+        <ThemedView style={styles.header}>
+          <ThemedText type="title" style={styles.title}>ChainLite</ThemedText>
+          <ThemedText style={styles.subtitle}>Your Personal Blockchain</ThemedText>
+          
+          {blockchainInfo.error ? (
+            <ThemedView style={styles.errorContainer}>
+              <Ionicons name="warning" size={20} color="#FF3B30" style={styles.errorIcon} />
+              <ThemedText style={styles.errorText}>{blockchainInfo.error}</ThemedText>
+            </ThemedView>
+          ) : (
+            <>
+              {blockchainInfo.walletAddress && (
+                <ThemedText style={styles.walletAddress} numberOfLines={1} ellipsizeMode="middle">
+                  {blockchainInfo.walletAddress}
+                </ThemedText>
+              )}
+              <ThemedText style={styles.balance}>
+                Balance: {blockchainInfo.balance} CLT
               </ThemedText>
-            )}
-            <ThemedText style={styles.balance}>
-              Balance: {blockchainInfo.balance} CLT
-            </ThemedText>
-          </>
-        )}
-      </ThemedView>
+            </>
+          )}
+        </ThemedView>
 
-      <View style={styles.statsContainer}>
-        <StatCard 
-          title="Blocks" 
-          value={blockchainInfo.chainLength} 
-          icon="cube" 
-          color="#007AFF" 
-        />
-        <StatCard 
-          title="Pending Tx" 
-          value={blockchainInfo.pendingTransactions} 
-          icon="swap-horizontal" 
-          color="#34C759" 
-        />
-        <StatCard 
-          title="Nodes" 
-          value={blockchainInfo.nodes} 
-          icon="globe" 
-          color="#FF9500" 
-        />
-      </View>
-
-      <ThemedView style={styles.section}>
-        <ThemedText type="subtitle" style={styles.sectionTitle}>Quick Actions</ThemedText>
-        <View style={styles.actionsContainer}>
-          <ActionButton
-            title="Send"
-            icon="arrow-up"
-            color="#FF3B30"
-            onPress={() => router.push('/send' as any)}
+        <View style={styles.statsContainer}>
+          <StatCard 
+            title="Blocks" 
+            value={blockchainInfo.chainLength} 
+            icon="cube" 
+            color="#007AFF" 
           />
-          <ActionButton
-            title="Receive"
-            icon="arrow-down"
-            color="#34C759"
-            onPress={() => router.push('/receive' as any)}
+          <StatCard 
+            title="Pending Tx" 
+            value={blockchainInfo.pendingTransactions} 
+            icon="swap-horizontal" 
+            color="#34C759" 
           />
-          <ActionButton
-            title={isMining ? 'Mining...' : 'Mine'}
-            icon="hammer"
-            color="#5856D6"
-            onPress={handleMineBlock}
-            disabled={isMining}
+          <StatCard 
+            title="Nodes" 
+            value={blockchainInfo.nodes} 
+            icon="globe" 
+            color="#FF9500" 
           />
         </View>
-      </ThemedView>
 
-      <ThemedView style={styles.section}>
-        <ThemedText type="subtitle" style={styles.sectionTitle}>Latest Block</ThemedText>
-        {blockchainInfo.lastBlock ? (
-          <ThemedView style={styles.blockCard}>
-            <ThemedText style={styles.blockHash} numberOfLines={1} ellipsizeMode="middle">
-              Hash: {blockchainInfo.lastBlock.hash}
-            </ThemedText>
-            <View style={styles.blockInfo}>
-              <ThemedText style={styles.blockInfoText}>
-                Index: {blockchainInfo.lastBlock.index}
+        <ThemedView style={styles.section}>
+          <ThemedText type="subtitle" style={styles.sectionTitle}>Quick Actions</ThemedText>
+          <View style={styles.actionsContainer}>
+            <ActionButton
+              title="Send"
+              icon="arrow-up"
+              color="#FF3B30"
+              onPress={() => router.push('/send' as any)}
+            />
+            <ActionButton
+              title="Receive"
+              icon="arrow-down"
+              color="#34C759"
+              onPress={() => router.push('/receive' as any)}
+            />
+            <ActionButton
+              title={isMining ? 'Mining...' : 'Mine'}
+              icon="hammer"
+              color="#5856D6"
+              onPress={handleMineBlock}
+              disabled={isMining}
+            />
+          </View>
+        </ThemedView>
+
+        <ThemedView style={styles.section}>
+          <ThemedText type="subtitle" style={styles.sectionTitle}>Latest Block</ThemedText>
+          {blockchainInfo.lastBlock ? (
+            <ThemedView style={styles.blockCard}>
+              <ThemedText style={styles.blockHash} numberOfLines={1} ellipsizeMode="middle">
+                Hash: {blockchainInfo.lastBlock.hash}
               </ThemedText>
-              <ThemedText style={styles.blockInfoText}>
-                Transactions: {blockchainInfo.lastBlock.transactions?.length || 0}
+              <View style={styles.blockInfo}>
+                <ThemedText style={styles.blockInfoText}>
+                  Index: {blockchainInfo.lastBlock.index}
+                </ThemedText>
+                <ThemedText style={styles.blockInfoText}>
+                  Transactions: {blockchainInfo.lastBlock.transactions?.length || 0}
+                </ThemedText>
+              </View>
+              <ThemedText style={styles.blockTimestamp}>
+                {new Date(blockchainInfo.lastBlock.timestamp).toLocaleString()}
               </ThemedText>
-            </View>
-            <ThemedText style={styles.blockTimestamp}>
-              {new Date(blockchainInfo.lastBlock.timestamp).toLocaleString()}
-            </ThemedText>
-          </ThemedView>
-        ) : (
-          <ThemedText style={styles.noData}>No blocks found. Start by mining the first block!</ThemedText>
-        )}
-      </ThemedView>
-    </ScrollView>
+            </ThemedView>
+          ) : (
+            <ThemedText style={styles.noData}>No blocks found. Start by mining the first block!</ThemedText>
+          )}
+        </ThemedView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  container: {
+    flex: 1,
+    padding: 16,
   },
   header: {
     padding: 25,

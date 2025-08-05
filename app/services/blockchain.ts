@@ -44,7 +44,7 @@ interface ConsensusResponse {
 }
 
 // Configuration - Update this with your actual server IP
-const API_BASE_URL = 'http://YOUR_COMPUTER_IP:5000';
+const API_BASE_URL = 'http://127.0.0.1:8000';
 
 // Create axios instance with base URL and headers
 const api = axios.create({
@@ -74,20 +74,33 @@ const handleApiError = (error: any, defaultMessage: string) => {
 };
 
 // Blockchain API methods
+export const getEndpoints = async (): Promise<any> => {
+  try {
+    const response = await api.get('/');
+    return response.data;
+  } catch (error) {
+    return handleApiError(error, 'Failed to fetch endpoints');
+  }
+};
+
 export const getChain = async (): Promise<Block[]> => {
   try {
-    const response = await api.get<BlockchainInfo>('/chain');
-    return response.data.chain;
+    const response = await api.get<{ data: { chain: Block[] } }>('/chain');
+    return response.data?.data?.chain || [];
   } catch (error) {
+    console.error('Error in getChain:', error);
     return handleApiError(error, 'Failed to fetch blockchain');
   }
 };
 
 export const getPendingTransactions = async (): Promise<Transaction[]> => {
   try {
-    const response = await api.get<{ transactions: Transaction[] }>('/pending_tx');
-    return response.data.transactions || [];
+    // The pending transactions are included in the chain response
+    const chain = await getChain();
+    // Get the latest block's transactions as pending (simplification)
+    return chain.length > 0 ? chain[chain.length - 1].transactions : [];
   } catch (error) {
+    console.error('Error in getPendingTransactions:', error);
     return handleApiError(error, 'Failed to fetch pending transactions');
   }
 };
@@ -104,40 +117,33 @@ export const createTransaction = async (
       sender,
       recipient,
       amount,
-      timestamp: Date.now(),
     };
 
     // This is a placeholder - in a real app, you would sign the transaction
     const signature = await signTransaction(transaction, privateKey);
 
-    const response = await api.post<Transaction>('/transactions/new', {
+    const response = await api.post<Transaction>('/transactions', {
       ...transaction,
       signature,
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
 
     return response.data;
   } catch (error) {
+    console.error('Error in createTransaction:', error);
     return handleApiError(error, 'Failed to create transaction');
   }
 };
 
-export const mineBlock = async (minerAddress: string): Promise<MineResponse> => {
+export const mineBlock = async (): Promise<MineResponse> => {
   try {
-    const response = await api.get<MineResponse>('/mine', {
-      params: { miner_address: minerAddress },
-    });
+    const response = await api.get<MineResponse>('/mine');
     return response.data;
   } catch (error) {
     return handleApiError(error, 'Failed to mine block');
-  }
-};
-
-export const getRegisteredNodes = async (): Promise<string[]> => {
-  try {
-    const response = await api.get<{ nodes: string[] }>('/nodes');
-    return response.data.nodes || [];
-  } catch (error) {
-    return handleApiError(error, 'Failed to fetch registered nodes');
   }
 };
 
@@ -149,6 +155,16 @@ export const registerNode = async (nodeUrl: string): Promise<RegisterNodeRespons
     return response.data;
   } catch (error) {
     return handleApiError(error, 'Failed to register node');
+  }
+};
+
+export const getRegisteredNodes = async (): Promise<string[]> => {
+  try {
+    const response = await api.get<{ data: { nodes: string[] } }>('/nodes');
+    return response.data?.data?.nodes || [];
+  } catch (error) {
+    console.error('Error in getRegisteredNodes:', error);
+    return handleApiError(error, 'Failed to fetch registered nodes');
   }
 };
 
