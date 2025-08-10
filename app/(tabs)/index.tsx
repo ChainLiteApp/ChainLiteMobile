@@ -1,404 +1,233 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, RefreshControl, TouchableOpacity, Alert, ScrollView, SafeAreaView } from 'react-native';
-import { useRouter } from 'expo-router';
+import Header from '@/components/ui/Header';
+import MetricCard from '@/components/ui/MetricCard';
+import ModuleCard from '@/components/ui/ModuleCard';
+import ProgressBar from '@/components/ui/ProgressBar';
 import { Ionicons } from '@expo/vector-icons';
-import * as SecureStore from 'expo-secure-store';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native';
 
-// Import components
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-
-// Import services and types
-import * as blockchainService from '@/app/services/blockchain';
-import type { Block } from '@/app/services/blockchain';
-
-// Types
-interface BlockchainState {
-  chainLength: number;
-  pendingTransactions: number;
-  nodes: number;
-  lastBlock: Block | null;
-  walletAddress: string | null;
-  balance: number;
-  error: string | null;
-}
-
-interface StatCardProps {
-  title: string;
-  value: number | string;
+type Module = {
   icon: keyof typeof Ionicons.glyphMap;
-  color: string;
-}
-
-interface ActionButtonProps {
   title: string;
-  onPress: () => void;
-  icon: keyof typeof Ionicons.glyphMap;
-  color: string;
-  disabled?: boolean;
-}
+  subtitle: string;
+  colors: [string, string];
+  progress?: number | null;
+};
 
-const StatCard = ({ title, value, icon, color }: StatCardProps) => (
-  <ThemedView style={[styles.statCard, { borderLeftColor: color }]}>
-    <Ionicons name={icon} size={24} color={color} style={styles.statIcon} />
-    <ThemedText style={styles.statValue}>{value}</ThemedText>
-    <ThemedText style={styles.statTitle}>{title}</ThemedText>
-  </ThemedView>
-);
+const modules: Module[] = [
+  {
+    icon: 'play-circle-outline',
+    title: 'Mine Your First Block',
+    subtitle: 'Experience proof-of-work mining',
+    colors: ['#22c55e', '#16a34a'],
+    progress: null,
+  },
+  {
+    icon: 'git-network-outline',
+    title: 'Build a Network',
+    subtitle: 'Connect nodes and sync blockchain',
+    colors: ['#60a5fa', '#06b6d4'],
+    progress: 30,
+  },
+  {
+    icon: 'eye-outline',
+    title: 'Block Explorer',
+    subtitle: 'Dive deep into blockchain data',
+    colors: ['#a855f7', '#6366f1'],
+    progress: 70,
+  },
+  {
+    icon: 'bookmark-outline',
+    title: 'Consensus Challenge',
+    subtitle: 'Resolve network conflicts',
+    colors: ['#fb923c', '#ef4444'],
+    progress: 100,
+  },
+];
 
-const ActionButton = ({ 
-  title, 
-  onPress, 
-  icon, 
-  color, 
-  disabled = false 
-}: ActionButtonProps) => (
-  <TouchableOpacity 
-    style={[styles.actionButton, { 
-      backgroundColor: disabled ? '#CCCCCC' : color,
-    }]}
-    onPress={onPress}
-    disabled={disabled}
-  >
-    <Ionicons name={icon} size={20} color="white" style={styles.actionIcon} />
-    <ThemedText style={styles.actionText}>{title}</ThemedText>
-  </TouchableOpacity>
-);
-
-export default function HomeScreen() {
-  const router = useRouter();
-  const [blockchainInfo, setBlockchainInfo] = useState<BlockchainState>({
-    chainLength: 0,
-    pendingTransactions: 0,
-    nodes: 0,
-    lastBlock: null,
-    walletAddress: null,
-    balance: 0,
-  error: null,
-  });
-  const [refreshing, setRefreshing] = useState(false);
-  const [isMining, setIsMining] = useState(false);
-
-  const fetchBlockchainData = async () => {
-    try {
-      setRefreshing(true);
-      
-      // Get wallet address if it exists
-      let walletAddress: string | null = null;
-      try {
-        walletAddress = await blockchainService.getWalletAddress();
-      } catch (error) {
-        console.warn('No wallet found, proceeding without it');
-      }
-      
-      try {
-        // Fetch blockchain data
-        const chain = await blockchainService.getChain();
-        const nodes = await blockchainService.getRegisteredNodes();
-        
-        // Calculate pending transactions from the latest block
-        const pendingTx = chain.length > 0 ? chain[chain.length - 1].transactions : [];
-        
-        // Get balance if wallet exists
-        let balance = 0;
-        if (walletAddress) {
-          try {
-            balance = await blockchainService.getBalance(walletAddress);
-          } catch (error) {
-            console.warn('Failed to fetch balance:', error);
-          }
-        }
-
-        setBlockchainInfo(prev => ({
-          ...prev,
-          chainLength: chain.length,
-          pendingTransactions: pendingTx.length,
-          nodes: nodes.length,
-          lastBlock: chain[chain.length - 1] || null,
-          walletAddress,
-          balance,
-          error: null,
-        }));
-      } catch (error) {
-        console.error('Error fetching blockchain data:', error);
-        setBlockchainInfo(prev => ({
-          ...prev,
-          error: 'Failed to connect to blockchain server. Make sure it\'s running and accessible.',
-        }));
-      }
-    } catch (error) {
-      console.error('Unexpected error:', error);
-      Alert.alert('Error', 'An unexpected error occurred');
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  const handleMineBlock = async () => {
-    try {
-      setIsMining(true);
-      const walletAddress = await blockchainService.getWalletAddress();
-      if (!walletAddress) {
-        Alert.alert('Error', 'No wallet found. Please create a wallet first.');
-        return;
-      }
-      
-      const result = await blockchainService.mineBlock();
-      Alert.alert('Success', `Block mined! ${result.message}`);
-      fetchBlockchainData();
-    } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to mine block');
-    } finally {
-      setIsMining(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchBlockchainData();
-  }, []);
+export default function LearnScreen() {
+  const tabBarHeight = useBottomTabBarHeight();
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView 
-        style={styles.container}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={fetchBlockchainData}
-          />
-        }
+    <ScrollView showsVerticalScrollIndicator={false}>
+    <LinearGradient
+      colors={['#1d0b3b', '#7a2bca']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 24 }]}
+        showsVerticalScrollIndicator={false}
       >
-        <ThemedView style={styles.header}>
-          <ThemedText type="title" style={styles.title}>ChainLite</ThemedText>
-          <ThemedText style={styles.subtitle}>Your Personal Blockchain</ThemedText>
-          
-          {blockchainInfo.error ? (
-            <ThemedView style={styles.errorContainer}>
-              <Ionicons name="warning" size={20} color="#FF3B30" style={styles.errorIcon} />
-              <ThemedText style={styles.errorText}>{blockchainInfo.error}</ThemedText>
-            </ThemedView>
-          ) : (
-            <>
-              {blockchainInfo.walletAddress && (
-                <ThemedText style={styles.walletAddress} numberOfLines={1} ellipsizeMode="middle">
-                  {blockchainInfo.walletAddress}
-                </ThemedText>
-              )}
-              <ThemedText style={styles.balance}>
-                Balance: {blockchainInfo.balance} CLT
-              </ThemedText>
-            </>
-          )}
-        </ThemedView>
+        {/* Header */}
+        <Header title="ChainLite" subtitle="Learn Blockchain Interactively" />
 
-        <View style={styles.statsContainer}>
-          <StatCard 
-            title="Blocks" 
-            value={blockchainInfo.chainLength} 
-            icon="cube" 
-            color="#007AFF" 
-          />
-          <StatCard 
-            title="Pending Tx" 
-            value={blockchainInfo.pendingTransactions} 
-            icon="swap-horizontal" 
-            color="#34C759" 
-          />
-          <StatCard 
-            title="Nodes" 
-            value={blockchainInfo.nodes} 
-            icon="globe" 
-            color="#FF9500" 
-          />
+        {/* Stats Cards */}
+        <View style={styles.statsRow}>
+          <MetricCard icon="flash-outline" statusLabel="LIVE" statusColor="#22c55e" value="1,247" label="Blocks Mined" style={{ marginRight: 12 }} />
+          <MetricCard icon="power-outline" statusLabel="ACTIVE" statusColor="#60a5fa" value="3" label="Network Nodes" />
         </View>
 
-        <ThemedView style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>Quick Actions</ThemedText>
-          <View style={styles.actionsContainer}>
-            <ActionButton
-              title="Send"
-              icon="arrow-up"
-              color="#FF3B30"
-              onPress={() => router.push('/send' as any)}
-            />
-            <ActionButton
-              title="Receive"
-              icon="arrow-down"
-              color="#34C759"
-              onPress={() => router.push('/receive' as any)}
-            />
-            <ActionButton
-              title={isMining ? 'Mining...' : 'Mine'}
-              icon="hammer"
-              color="#5856D6"
-              onPress={handleMineBlock}
-              disabled={isMining}
-            />
-          </View>
-        </ThemedView>
+        {/* Section Title */}
+        <Text style={styles.sectionTitle}>Interactive Learning</Text>
 
-        <ThemedView style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>Latest Block</ThemedText>
-          {blockchainInfo.lastBlock ? (
-            <ThemedView style={styles.blockCard}>
-              <ThemedText style={styles.blockHash} numberOfLines={1} ellipsizeMode="middle">
-                Hash: {blockchainInfo.lastBlock.hash}
-              </ThemedText>
-              <View style={styles.blockInfo}>
-                <ThemedText style={styles.blockInfoText}>
-                  Index: {blockchainInfo.lastBlock.index}
-                </ThemedText>
-                <ThemedText style={styles.blockInfoText}>
-                  Transactions: {blockchainInfo.lastBlock.transactions?.length || 0}
-                </ThemedText>
-              </View>
-              <ThemedText style={styles.blockTimestamp}>
-                {new Date(blockchainInfo.lastBlock.timestamp).toLocaleString()}
-              </ThemedText>
-            </ThemedView>
-          ) : (
-            <ThemedText style={styles.noData}>No blocks found. Start by mining the first block!</ThemedText>
-          )}
-        </ThemedView>
+        {/* Modules */}
+        <View style={styles.modulesContainer}>
+          {modules.map((m, idx) => (
+            <View key={idx}>
+              <ModuleCard colors={m.colors} icon={m.icon} title={m.title} subtitle={m.subtitle} />
+              {typeof m.progress === 'number' && (
+                <View style={styles.progressWrap}>
+                  <ProgressBar progress={m.progress} />
+                  <Text style={styles.progressText}>{m.progress}% Complete</Text>
+                </View>
+              )}
+            </View>
+          ))}
+        </View>
       </ScrollView>
-    </SafeAreaView>
+    </LinearGradient>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
   container: {
     flex: 1,
-    padding: 16,
+  },
+  scrollContent: {
+    paddingTop: 56,
+    paddingHorizontal: 20,
   },
   header: {
-    padding: 25,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  headerIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerIconBell: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    position: 'relative',
+  },
+  headerIconWallet: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  notifyDot: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#fb7185',
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontWeight: '800',
+    color: '#ffffff',
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 16,
-    opacity: 0.8,
+    fontSize: 15,
+    color: '#c7c9ff',
+    marginTop: 4,
+    fontWeight: '500',
   },
-  statsContainer: {
+  statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    marginBottom: 20,
-  },
-  statCard: {
-    flex: 1,
-    borderRadius: 12,
-    padding: 15,
-    marginHorizontal: 5,
-    borderLeftWidth: 4,
-  },
-  statIcon: {
-    marginBottom: 5,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 2,
-  },
-  statTitle: {
-    fontSize: 12,
-    opacity: 0.6,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  section: {
-    marginBottom: 20,
-    paddingHorizontal: 15,
+    marginTop: 16,
+    marginBottom: 24,
   },
   sectionTitle: {
-    marginBottom: 15,
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginBottom: 16,
   },
-  actionsContainer: {
+  modulesContainer: {
+    gap: 18,
+    marginBottom: 12,
+  },
+  moduleTouchable: {
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  moduleCard: {
+    padding: 18,
+    borderRadius: 20,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 5,
   },
-  actionButton: {
-    flex: 1,
+  moduleLeft: {
     flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  moduleIconBg: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.25)',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 12,
-    borderRadius: 10,
-    marginHorizontal: 5,
+    marginRight: 14,
   },
-  actionIcon: {
-    marginRight: 8,
-  },
-  actionText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  blockCard: {
-    borderRadius: 12,
-    padding: 15,
-  },
-  blockHash: {
-    fontFamily: 'monospace',
-    fontSize: 14,
-    marginBottom: 10,
-  },
-  blockInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  blockInfoText: {
-    opacity: 0.7,
-    fontSize: 14,
-  },
-  blockTimestamp: {
-    fontSize: 12,
-    opacity: 0.6,
-    fontStyle: 'italic',
-  },
-  noData: {
-    textAlign: 'center',
-    opacity: 0.6,
-    marginVertical: 20,
-    fontStyle: 'italic',
-  },
-  walletAddress: {
-    fontSize: 12,
-    opacity: 0.7,
-    marginTop: 8,
-    maxWidth: '80%',
-  },
-  balance: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 8,
-    color: '#007AFF',
-  },
-  errorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 59, 48, 0.1)',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 12,
-    width: '100%',
-  },
-  errorIcon: {
-    marginRight: 8,
-  },
-  errorText: {
-    color: '#FF3B30',
+  moduleText: {
     flex: 1,
+  },
+  moduleTitle: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  moduleSubtitle: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  progressWrap: {
+    paddingHorizontal: 12,
+    marginTop: 10,
+    marginBottom: 4,
+  },
+  progressTrack: {
+    width: '100%',
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.35)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 8,
+    backgroundColor: '#ffffff',
+    borderRadius: 4,
+  },
+  progressText: {
+    color: 'rgba(255,255,255,0.95)',
+    textAlign: 'center',
+    fontWeight: '600',
+    marginTop: 6,
   },
 });
