@@ -1,110 +1,303 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import Header from '@/components/ui/Header';
+import MetricCard from '@/components/ui/MetricCard';
 
-export default function TabTwoScreen() {
+export default function ExplorerScreen() {
+  const tabBarHeight = useBottomTabBarHeight();
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
+    <ScrollView showsVerticalScrollIndicator={false}>
+      <LinearGradient
+        colors={['#0f0a22', '#0f0a22']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.container}
+      >
+        <LinearGradient
+          colors={['rgba(122,43,202,0.34)', 'rgba(122,43,202,0.0)']}
+          start={{ x: 1, y: 0 }}
+          end={{ x: 0.2, y: 0.8 }}
+          style={styles.glow}
+          pointerEvents="none"
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+        <View style={[styles.content, { paddingBottom: tabBarHeight + 24 }]}>
+          <Header title="Explorer" subtitle="Block Explorer" />
+
+          {/* Search Bar */}
+          <View style={styles.searchBar}>
+            <Ionicons name="search" size={18} color="rgba(255,255,255,0.85)" />
+            <TextInput
+              placeholder="Search blocks, transactions, addresses..."
+              placeholderTextColor="rgba(255,255,255,0.6)"
+              style={styles.searchInput}
+            />
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Scan QR">
+              <Ionicons name="scan-outline" size={20} color="rgba(255,255,255,0.9)" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Filter Chips */}
+          <View style={styles.chipsRow}>
+            {['All', 'Blocks', 'Transactions', 'Addresses'].map((label, index) => (
+              <TouchableOpacity key={label} style={[styles.chip, index === 0 && styles.chipActive]}>
+                <Text style={[styles.chipText, index === 0 && styles.chipTextActive]}>{label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Stats */}
+          <View style={styles.statsRow}>
+            <MetricCard icon="cube-outline" statusLabel="LIVE" statusColor="#22c55e" value="#18,245,991" label="Latest Block" style={{ marginRight: 12 }} />
+            <MetricCard icon="swap-vertical-outline" statusLabel="TPS" statusColor="#60a5fa" value="32.4" label="Transactions / sec" />
+          </View>
+
+          {/* Latest Blocks */}
+          <Text style={styles.sectionTitle}>Latest Blocks</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.blocksScroller}>
+            {[...Array(6)].map((_, i) => (
+              <View key={i} style={styles.blockCard}>
+                <View style={styles.blockHeader}>
+                  <View style={styles.blockBadge}>
+                    <Ionicons name="cube-outline" color="#a78bfa" size={14} />
+                    <Text style={styles.blockBadgeText}>Block</Text>
+                  </View>
+                  <Text style={styles.blockTime}>2m ago</Text>
+                </View>
+                <Text style={styles.blockHeight}>#18,245,9{i}1</Text>
+                <View style={styles.blockMetaRow}>
+                  <Text style={styles.blockMeta}>Tx: 184</Text>
+                  <Text style={styles.blockMeta}>Gas: 23.4M</Text>
+                </View>
+                <Text numberOfLines={1} style={styles.blockMiner}>Miner: 0x3a1c...9f2b</Text>
+              </View>
+            ))}
+          </ScrollView>
+
+          {/* Latest Transactions */}
+          <Text style={styles.sectionTitle}>Latest Transactions</Text>
+          <View style={styles.txList}>
+            {[...Array(8)].map((_, i) => (
+              <View key={i} style={styles.txRow}>
+                <View style={styles.txIconWrap}>
+                  <Ionicons name="arrow-forward" size={16} color="#60a5fa" />
+                </View>
+                <View style={styles.txMain}>
+                  <Text numberOfLines={1} style={styles.txHash}>0x7f3a83d1b2c4...{i}a9</Text>
+                  <Text style={styles.txSub}>2 min ago • Block #18,245,9{i}1</Text>
+                </View>
+                <View style={styles.txRight}>
+                  <Text style={styles.txValue}>3.12 CLT</Text>
+                  <View style={styles.txStatus}>
+                    <View style={styles.txDot} />
+                    <Text style={styles.txStatusText}>Success</Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      </LinearGradient>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    paddingVertical: 20,
+    backgroundColor: '#0f0a22',
   },
-  titleContainer: {
+  content: {
+    paddingTop: 56,
+    paddingHorizontal: 20,
+  },
+  glow: {
+    position: 'absolute',
+    top: -140,
+    right: -120,
+    width: 520,
+    height: 520,
+    borderRadius: 260,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderColor: 'rgba(255,255,255,0.09)',
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    height: 50,
+    marginTop: 16,
+  },
+  searchInput: {
+    flex: 1,
+    color: '#ffffff',
+    marginHorizontal: 10,
+  },
+  chipsRow: {
     flexDirection: 'row',
     gap: 8,
+    marginTop: 14,
+    marginBottom: 10,
+  },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.09)',
+  },
+  chipActive: {
+    backgroundColor: 'rgba(122,43,202,0.28)',
+    borderColor: 'rgba(122,43,202,0.6)',
+  },
+  chipText: {
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  chipTextActive: {
+    color: '#ffffff',
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginTop: 18,
+    marginBottom: 12,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    marginBottom: 10,
+  },
+  blocksScroller: {
+    paddingVertical: 2,
+  },
+  blockCard: {
+    width: 236,
+    padding: 14,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.09)',
+    marginRight: 12,
+  },
+  blockHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  blockBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(122,43,202,0.22)',
+    borderWidth: 1,
+    borderColor: 'rgba(122,43,202,0.5)',
+  },
+  blockBadgeText: {
+    color: '#a78bfa',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  blockTime: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  blockHeight: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  blockMetaRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 6,
+  },
+  blockMeta: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  blockMiner: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  txList: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.09)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
+  txRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.07)',
+  },
+  txIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  txMain: {
+    flex: 1,
+  },
+  txHash: {
+    color: '#ffffff',
+    fontWeight: '800',
+    fontSize: 14,
+  },
+  txSub: {
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: 2,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  txRight: {
+    alignItems: 'flex-end',
+  },
+  txValue: {
+    color: '#ffffff',
+    fontWeight: '800',
+  },
+  txStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    gap: 6,
+  },
+  txDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#22c55e',
+  },
+  txStatusText: {
+    color: 'rgba(255,255,255,0.85)',
+    fontWeight: '700',
+    fontSize: 12,
   },
 });

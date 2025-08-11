@@ -34,8 +34,8 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     backgroundColor: 'rgba(51,10,95,0.95)',
-    paddingVertical: 22,
-    paddingHorizontal: 8,
+    paddingVertical: 26, // Increased from 22 (18% increase)
+    paddingHorizontal: 9.5, // Increased from 8 (18% increase)
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     justifyContent: 'space-around',
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   tab: {
     alignItems: 'center',
     flex: 1,
-    paddingVertical: 4,
+    paddingVertical: 8,
     borderRadius: 12,
   },
   activeTab: {

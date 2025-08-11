@@ -1,10 +1,10 @@
 import Header from '@/components/ui/Header';
 import MetricCard from '@/components/ui/MetricCard';
 import ModuleCard from '@/components/ui/ModuleCard';
-import ProgressBar from '@/components/ui/ProgressBar';
 import { Ionicons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import {
   ScrollView,
@@ -19,15 +19,21 @@ type Module = {
   subtitle: string;
   colors: [string, string];
   progress?: number | null;
+  onPress?: () => void;
 };
 
-const modules: Module[] = [
+export default function LearnScreen() {
+  const tabBarHeight = useBottomTabBarHeight();
+  const router = useRouter();
+
+  const modules: Module[] = [
   {
     icon: 'play-circle-outline',
     title: 'Mine Your First Block',
     subtitle: 'Experience proof-of-work mining',
     colors: ['#22c55e', '#16a34a'],
     progress: null,
+    onPress: () => router.push('/mining-tutorial'),
   },
   {
     icon: 'git-network-outline',
@@ -50,10 +56,7 @@ const modules: Module[] = [
     colors: ['#fb923c', '#ef4444'],
     progress: 100,
   },
-];
-
-export default function LearnScreen() {
-  const tabBarHeight = useBottomTabBarHeight();
+  ];
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
@@ -83,13 +86,7 @@ export default function LearnScreen() {
         <View style={styles.modulesContainer}>
           {modules.map((m, idx) => (
             <View key={idx}>
-              <ModuleCard colors={m.colors} icon={m.icon} title={m.title} subtitle={m.subtitle} />
-              {typeof m.progress === 'number' && (
-                <View style={styles.progressWrap}>
-                  <ProgressBar progress={m.progress} />
-                  <Text style={styles.progressText}>{m.progress}% Complete</Text>
-                </View>
-              )}
+              <ModuleCard density="compact" colors={m.colors} icon={m.icon} title={m.title} subtitle={m.subtitle} progress={m.progress ?? undefined} onPress={m.onPress} />
             </View>
           ))}
         </View>
@@ -102,6 +99,7 @@ export default function LearnScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingVertical: 20,
   },
   scrollContent: {
     paddingTop: 56,
@@ -165,8 +163,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modulesContainer: {
-    gap: 18,
-    marginBottom: 12,
+    gap: 12,
+    marginBottom: 8,
   },
   moduleTouchable: {
     borderRadius: 20,
@@ -206,28 +204,5 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.9)',
     fontSize: 14,
     fontWeight: '500',
-  },
-  progressWrap: {
-    paddingHorizontal: 12,
-    marginTop: 10,
-    marginBottom: 4,
-  },
-  progressTrack: {
-    width: '100%',
-    height: 8,
-    backgroundColor: 'rgba(255,255,255,0.35)',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: 8,
-    backgroundColor: '#ffffff',
-    borderRadius: 4,
-  },
-  progressText: {
-    color: 'rgba(255,255,255,0.95)',
-    textAlign: 'center',
-    fontWeight: '600',
-    marginTop: 6,
   },
 });

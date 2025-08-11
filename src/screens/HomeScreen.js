@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { Dimensions, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import ModuleCard from '../../components/ui/ModuleCard';
 import * as blockchainService from '../services/blockchain';
 
 const { width } = Dimensions.get('window');
@@ -41,27 +42,35 @@ const HomeScreen = () => {
 
   const modules = [
     {
-      icon: 'hammer-outline',
-      title: 'Interactive Mining',
-      subtitle: 'Mine Your First proof-of-work block',
-      color: '#22c55e',
+      icon: 'play-circle-outline',
+      title: 'Mine Your First Block',
+      subtitle: 'Experience proof-of-work mining',
+      colors: ['#22c55e', '#16a34a'],
       progress: null,
       onPress: () => {},
     },
     {
       icon: 'git-network-outline',
       title: 'Build a Network',
-      subtitle: 'Blockchain and sync',
-      color: '#3b82f6',
-      progress: 80,
+      subtitle: 'Connect nodes and sync blockchain',
+      colors: ['#60a5fa', '#06b6d4'],
+      progress: 30,
       onPress: () => {},
     },
     {
-      icon: 'search-outline',
-      title: 'Blockchain Explorer',
-      subtitle: 'Dive deep into Blockchain data',
-      color: '#8b5cf6',
-      progress: 0,
+      icon: 'eye-outline',
+      title: 'Block Explorer',
+      subtitle: 'Dive deep into blockchain data',
+      colors: ['#a855f7', '#6366f1'],
+      progress: 70,
+      onPress: () => {},
+    },
+    {
+      icon: 'bookmark-outline',
+      title: 'Consensus Challenge',
+      subtitle: 'Resolve network conflicts',
+      colors: ['#fb923c', '#ef4444'],
+      progress: 100,
       onPress: () => {},
     },
   ];
@@ -113,30 +122,17 @@ const HomeScreen = () => {
         {/* Interactive Learning */}
         <Text style={styles.sectionTitle}>Interactive Learning</Text>
         <View style={styles.modulesContainer}>
-          {modules.map((module, idx) => (
-            <TouchableOpacity
-              key={idx}
-              style={[styles.moduleCard, { backgroundColor: module.color }]}
-              activeOpacity={0.9}
-              onPress={module.onPress}
-            >
-              <View style={styles.moduleContent}>
-                <Ionicons name={module.icon} size={24} color="#fff" style={styles.moduleIcon} />
-                <View style={styles.moduleTextContainer}>
-                  <Text style={styles.moduleTitle}>{module.title}</Text>
-                  <Text style={styles.moduleSubtitle}>{module.subtitle}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.8)" />
-              </View>
-              {typeof module.progress === 'number' && (
-                <View style={styles.progressContainer}>
-                  <View style={styles.progressBarBg}>
-                    <View style={[styles.progressBarFill, { width: `${module.progress}%` }]} />
-                  </View>
-                  <Text style={styles.progressText}>{module.progress}% Complete</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+          {modules.map((m, idx) => (
+            <View key={idx} style={{ marginBottom: 18 }}>
+              <ModuleCard
+                colors={m.colors}
+                icon={m.icon}
+                title={m.title}
+                subtitle={m.subtitle}
+                onPress={m.onPress}
+                progress={m.progress ?? undefined}
+              />
+            </View>
           ))}
         </View>
       </ScrollView>
@@ -148,7 +144,7 @@ const HomeScreen = () => {
             key={tab.id}
             style={styles.navItem}
             onPress={() => setActiveTab(tab.id)}
-            activeOpacity={0.7}
+            activeOpacity={0.8}
           >
             <Ionicons
               name={tab.icon}
@@ -237,63 +233,17 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: '#ffffff',
     marginLeft: 20,
-    marginBottom: 16,
+    marginBottom: 20,
+    marginTop: 8,
+    letterSpacing: -0.5,
   },
   modulesContainer: {
     marginHorizontal: 20,
-  },
-  moduleCard: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  moduleContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  moduleIcon: {
-    marginRight: 12,
-  },
-  moduleTextContainer: {
-    flex: 1,
-  },
-  moduleTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
-    marginBottom: 2,
-  },
-  moduleSubtitle: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.9)',
-    fontWeight: '400',
-  },
-  progressContainer: {
-    marginTop: 8,
-  },
-  progressBarBg: {
-    width: '100%',
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: 4,
-    backgroundColor: '#ffffff',
-    borderRadius: 2,
-  },
-  progressText: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 11,
-    marginTop: 4,
-    textAlign: 'right',
-    fontWeight: '500',
+    marginBottom: 24,
   },
   bottomNav: {
     position: 'absolute',
