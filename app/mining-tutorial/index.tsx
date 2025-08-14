@@ -3,19 +3,52 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getTutorialProgress } from '@/utils/tutorialProgress';
+
+interface TutorialStep {
+  label: string;
+  done: boolean;
+  index: number;
+  route: string;
+}
 
 export default function MiningTutorialScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const [steps, setSteps] = useState<TutorialStep[]>([]);
 
   useEffect(() => {
-    // Hide the default stack header; we render our own custom header
     navigation.setOptions?.({ headerShown: false });
+    let isMounted = true;
+    (async () => {
+      const progress = await getTutorialProgress();
+      const tutorialSteps: TutorialStep[] = [
+        { label: 'What is Mining?', route: '/mining-tutorial/what-is-mining', index: 1 },
+        { label: 'Proof of Work', route: '/mining-tutorial/proof-of-work', index: 2 },
+        { label: 'Finding the Nonce', route: '/mining-tutorial/finding-the-nonce', index: 3 },
+        { label: 'Block Validation', route: '/mining-tutorial/block-validation', index: 4 },
+        { label: 'Mining Rewards', route: '/mining-tutorial/mining-rewards', index: 5 },
+      ].map(step => ({
+        ...step,
+        done: progress.completedSteps.includes(step.index)
+      }));
+      if (isMounted) setSteps(tutorialSteps);
+    })();
+    return () => { isMounted = false; };
   }, [navigation]);
+  
+  const handleStepPress = (step: TutorialStep) => {
+    router.push(step.route);
+  };
+  
+  const getNextIncompleteStep = () => {
+    const nextStep = steps.find(step => !step.done) || steps[0];
+    return nextStep?.route || '/mining-tutorial/what-is-mining';
+  };
 
   return (
     <LinearGradient colors={["#0b331f", "#0e2a1e"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.container}>
@@ -37,31 +70,36 @@ export default function MiningTutorialScreen() {
 
           {/* Steps */}
           <View style={styles.steps}>
-            {[
-              { label: 'What is Mining?', done: true, index: 1 },
-              { label: 'Proof of Work', done: true, index: 2 },
-              { label: 'Finding the Nonce', done: false, index: 3 },
-              { label: 'Block Validation', done: false, index: 4 },
-              { label: 'Mining Rewards', done: false, index: 5 },
-            ].map((s, i) => (
-              <TouchableOpacity key={s.label} activeOpacity={0.85} style={[styles.stepRow, s.done ? styles.stepRowDone : styles.stepRowTodo]}>
-                <View style={[styles.stepIcon, s.done ? styles.stepIconDone : styles.stepIconTodo]}>
-                  {s.done ? (
+            {steps.map((step) => (
+              <TouchableOpacity 
+                key={step.label} 
+                activeOpacity={0.85} 
+                style={[styles.stepRow, step.done ? styles.stepRowDone : styles.stepRowTodo]}
+                onPress={() => handleStepPress(step)}
+              >
+                <View style={[styles.stepIcon, step.done ? styles.stepIconDone : styles.stepIconTodo]}>
+                  {step.done ? (
                     <Ionicons name="checkmark-circle" size={22} color="#9ef5b5" />
                   ) : (
-                    <Text style={styles.stepIndex}>{s.index}</Text>
+                    <Text style={styles.stepIndex}>{step.index}</Text>
                   )}
                 </View>
-                <Text style={styles.stepText}>{s.label}</Text>
+                <Text style={styles.stepText}>{step.label}</Text>
                 <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.9)" />
               </TouchableOpacity>
             ))}
           </View>
 
           {/* CTA */}
-          <TouchableOpacity activeOpacity={0.9} style={styles.ctaBtn}>
+          <TouchableOpacity 
+            activeOpacity={0.9} 
+            style={styles.ctaBtn}
+            onPress={() => router.push(getNextIncompleteStep())}
+          >
             <LinearGradient colors={["#35d07f", "#14b45a"]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={styles.ctaGrad}>
-              <Text style={styles.ctaText}>Continue Tutorial</Text>
+              <Text style={styles.ctaText}>
+                {steps.every(step => step.done) ? 'Review Tutorial' : 'Continue Tutorial'}
+              </Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>

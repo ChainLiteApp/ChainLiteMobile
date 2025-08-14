@@ -1,4 +1,4 @@
-import * as blockchain from './app/services/blockchain';
+import * as blockchain from '../app/services/blockchain';
 
 async function testBlockchainService() {
   try {

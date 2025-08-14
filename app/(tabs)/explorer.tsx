@@ -1,64 +1,64 @@
-import React from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import Header from '@/components/ui/Header';
-import MetricCard from '@/components/ui/MetricCard';
 
 export default function ExplorerScreen() {
   const tabBarHeight = useBottomTabBarHeight();
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
-      <LinearGradient
-        colors={['#0f0a22', '#0f0a22']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.container}
+    <View style={styles.pageContainer}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        style={styles.gradientContainer}
       >
-        <LinearGradient
-          colors={['rgba(122,43,202,0.34)', 'rgba(122,43,202,0.0)']}
-          start={{ x: 1, y: 0 }}
-          end={{ x: 0.2, y: 0.8 }}
-          style={styles.glow}
-          pointerEvents="none"
-        />
-        <View style={[styles.content, { paddingBottom: tabBarHeight + 24 }]}>
+    <LinearGradient
+  colors={["#3D4E81", "#5753C9", "#6E7FF3"]}
+  start={{ x: 0, y: 0 }}
+  end={{ x: 1, y: 0 }}
+  locations={[0, 0.55, 1]}
+  style={styles.container}
+>
+
+    
+         
+          <View style={[styles.content, { paddingBottom: tabBarHeight + 24 }]}>
           <Header title="Explorer" subtitle="Block Explorer" />
 
           {/* Search Bar */}
           <View style={styles.searchBar}>
-            <Ionicons name="search" size={18} color="rgba(255,255,255,0.85)" />
+            <Ionicons name="search" size={20} color="rgba(255,255,255,0.9)" />
             <TextInput
               placeholder="Search blocks, transactions, addresses..."
-              placeholderTextColor="rgba(255,255,255,0.6)"
+              placeholderTextColor="rgba(255,255,255,0.7)"
               style={styles.searchInput}
             />
             <TouchableOpacity accessibilityRole="button" accessibilityLabel="Scan QR">
-              <Ionicons name="scan-outline" size={20} color="rgba(255,255,255,0.9)" />
+              <Ionicons name="scan-outline" size={22} color="rgba(255,255,255,0.95)" />
             </TouchableOpacity>
           </View>
 
           {/* Filter Chips */}
-          <View style={styles.chipsRow}>
+          {/* <View style={styles.chipsRow}>
             {['All', 'Blocks', 'Transactions', 'Addresses'].map((label, index) => (
               <TouchableOpacity key={label} style={[styles.chip, index === 0 && styles.chipActive]}>
                 <Text style={[styles.chipText, index === 0 && styles.chipTextActive]}>{label}</Text>
               </TouchableOpacity>
             ))}
-          </View>
+          </View> */}
 
-          {/* Stats */}
+          {/* Stats
           <View style={styles.statsRow}>
             <MetricCard icon="cube-outline" statusLabel="LIVE" statusColor="#22c55e" value="#18,245,991" label="Latest Block" style={{ marginRight: 12 }} />
             <MetricCard icon="swap-vertical-outline" statusLabel="TPS" statusColor="#60a5fa" value="32.4" label="Transactions / sec" />
-          </View>
+          </View> */}
 
           {/* Latest Blocks */}
           <Text style={styles.sectionTitle}>Latest Blocks</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.blocksScroller}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.blocksScroller}>
             {[...Array(6)].map((_, i) => (
               <View key={i} style={styles.blockCard}>
                 <View style={styles.blockHeader}>
@@ -78,7 +78,7 @@ export default function ExplorerScreen() {
             ))}
           </ScrollView>
 
-          {/* Latest Transactions */}
+          {/* Latest Transactions
           <Text style={styles.sectionTitle}>Latest Transactions</Text>
           <View style={styles.txList}>
             {[...Array(8)].map((_, i) => (
@@ -99,18 +99,24 @@ export default function ExplorerScreen() {
                 </View>
               </View>
             ))}
+          </View> */}
           </View>
-        </View>
-      </LinearGradient>
-    </ScrollView>
+        </LinearGradient>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  pageContainer: {
+    flex: 1,
+  },
+  gradientContainer: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     paddingVertical: 20,
-    backgroundColor: '#0f0a22',
   },
   content: {
     paddingTop: 56,
@@ -118,21 +124,22 @@ const styles = StyleSheet.create({
   },
   glow: {
     position: 'absolute',
-    top: -140,
-    right: -120,
-    width: 520,
-    height: 520,
-    borderRadius: 260,
+    top: -100,
+    right: -100,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    opacity: 0.8,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderColor: 'rgba(255,255,255,0.09)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderColor: 'rgba(255,255,255,0.12)',
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: 18,
     paddingHorizontal: 12,
-    height: 50,
+    height: 52,
     marginTop: 16,
   },
   searchInput: {
@@ -142,21 +149,21 @@ const styles = StyleSheet.create({
   },
   chipsRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
     marginTop: 14,
     marginBottom: 10,
   },
   chip: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.09)',
+    borderColor: 'rgba(255,255,255,0.12)',
   },
   chipActive: {
-    backgroundColor: 'rgba(122,43,202,0.28)',
-    borderColor: 'rgba(122,43,202,0.6)',
+    backgroundColor: 'rgba(122,43,202,0.32)',
+    borderColor: 'rgba(122,43,202,0.65)',
   },
   chipText: {
     color: 'rgba(255,255,255,0.9)',
@@ -181,14 +188,18 @@ const styles = StyleSheet.create({
   },
   blocksScroller: {
     paddingVertical: 2,
+    padding: 20,
+    gap: 12,
+    flexDirection: 'column',    
+    alignItems: 'center',
   },
   blockCard: {
-    width: 236,
+    width: '100%',
     padding: 14,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.09)',
+    borderColor: 'rgba(255,255,255,0.12)',
     marginRight: 12,
   },
   blockHeader: {
@@ -204,9 +215,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 999,
-    backgroundColor: 'rgba(122,43,202,0.22)',
+    backgroundColor: 'rgba(122,43,202,0.24)',
     borderWidth: 1,
-    borderColor: 'rgba(122,43,202,0.5)',
+    borderColor: 'rgba(122,43,202,0.55)',
   },
   blockBadgeText: {
     color: '#a78bfa',
@@ -242,8 +253,8 @@ const styles = StyleSheet.create({
   txList: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.09)',
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
   txRow: {
     flexDirection: 'row',
@@ -251,13 +262,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.07)',
+    borderBottomColor: 'rgba(255,255,255,0.09)',
   },
   txIconWrap: {
     width: 34,
     height: 34,
     borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,

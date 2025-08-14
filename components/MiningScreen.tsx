@@ -3,11 +3,13 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
 export default function MiningScreen() {
   const tabBarHeight = useBottomTabBarHeight();
+  const router = useRouter();
   const [miningProgress, setMiningProgress] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [nonceAttempts, setNonceAttempts] = useState(15420);
@@ -39,23 +41,30 @@ export default function MiningScreen() {
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
-    <LinearGradient
-      colors={['#1f2937', '#065f46']}
-      style={[styles.container, { paddingBottom: tabBarHeight + 16 }]}
-    >
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Mining Lab</Text>
-          <Text style={styles.subtitle}>Real-time blockchain mining</Text>
+      <LinearGradient
+        colors={['#0b331f', '#0e2a1e']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.container, { paddingBottom: tabBarHeight + 16 }]}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.title}>Mining</Text>
+            <Text style={styles.subtitle}>Real-time blockchain mining</Text>
+          </View>
+          <View style={styles.headerActions}>
+            <TouchableOpacity style={[styles.smallButton, styles.smallButtonMuted]} onPress={() => router.push('/mine/history')}>
+              <Ionicons name="time-outline" size={18} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.smallButton, styles.smallButtonAccent]} onPress={() => router.push('/mine/settings')}>
+              <Ionicons name="settings-outline" size={18} color="#fff" />
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.iconContainer}>
-          <Ionicons name="hardware-chip" size={24} color="white" />
-        </View>
-      </View>
 
-      {/* Mining Card */}
-      <View style={styles.miningCard}>
+        {/* Mining Card */}
+        <View style={styles.miningCard}>
         <View style={styles.cardHeader}>
           <Text style={styles.blockTitle}>Block #1248</Text>
           <Text style={styles.blockSubtitle}>Finding the perfect nonce...</Text>
@@ -76,8 +85,8 @@ export default function MiningScreen() {
           </View>
         </View>
 
-        {/* Mining Stats */}
-        <View style={styles.statsContainer}>
+          {/* Mining Stats */}
+          <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{nonceAttempts.toLocaleString()}</Text>
             <Text style={styles.statLabel}>Nonce{'\n'}Attempts</Text>
@@ -90,35 +99,38 @@ export default function MiningScreen() {
             <Text style={styles.statValue}>4</Text>
             <Text style={styles.statLabel}>Difficulty</Text>
           </View>
+          </View>
+
+          {/* Start Mining Button */}
+          <TouchableOpacity
+            style={[styles.miningButton, isAnimating && styles.miningButtonDisabled]}
+            onPress={startMining}
+            disabled={isAnimating}
+            activeOpacity={0.9}
+          >
+            <LinearGradient colors={["#35d07f", "#14b45a"]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={styles.miningButtonGrad}>
+              <Text style={styles.miningButtonText}>
+                {isAnimating ? 'Mining Block...' : 'Start Mining'}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
 
-        {/* Start Mining Button */}
-        <TouchableOpacity
-          style={[styles.miningButton, isAnimating && styles.miningButtonDisabled]}
-          onPress={startMining}
-          disabled={isAnimating}
-        >
-          <Text style={styles.miningButtonText}>
-            {isAnimating ? 'Mining Block...' : 'Start Mining'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Educational Card */}
-      <View style={styles.educationCard}>
-        <View style={styles.educationIcon}>
-          <Ionicons name="code" size={16} color="white" />
+        {/* Educational Card */}
+        <View style={styles.educationCard}>
+          <View style={styles.educationIcon}>
+            <Ionicons name="code" size={16} color="white" />
+          </View>
+          <View style={styles.educationContent}>
+            <Text style={styles.educationTitle}>Mining Explained</Text>
+            <Text style={styles.educationText}>
+              Mining involves finding a nonce (random number) that, when combined
+              with block data, produces a hash starting with a specific number of
+              zeros. This proves computational work was done.
+            </Text>
+          </View>
         </View>
-        <View style={styles.educationContent}>
-          <Text style={styles.educationTitle}>Mining Explained</Text>
-          <Text style={styles.educationText}>
-            Mining involves finding a nonce (random number) that, when combined 
-            with block data, produces a hash starting with a specific number of 
-            zeros. This proves computational work was done.
-          </Text>
-        </View>
-      </View>
-    </LinearGradient>
+      </LinearGradient>
     </ScrollView>
   );
 }
@@ -142,16 +154,25 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 15,
-    color: '#9ca3af',
+    color: '#c7c9ff',
     marginTop: 2,
   },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(34, 197, 94, 0.3)',
-    justifyContent: 'center',
+  headerActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  smallButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  smallButtonMuted: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  smallButtonAccent: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   miningCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -196,8 +217,8 @@ const styles = StyleSheet.create({
     borderRadius: 80,
     borderWidth: 6,
     borderColor: 'transparent',
-    borderTopColor: '#22c55e',
-    borderRightColor: '#22c55e',
+    borderTopColor: '#7a2bca',
+    borderRightColor: '#7a2bca',
   },
   progressInner: {
     alignItems: 'center',
@@ -209,7 +230,7 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontSize: 14,
-    color: '#22c55e',
+    color: '#a78bfa',
     marginTop: 4,
   },
   statsContainer: {
@@ -234,7 +255,12 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   miningButton: {
-    backgroundColor: '#22c55e',
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  miningButtonGrad: {
+    width: '100%',
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: 'center',

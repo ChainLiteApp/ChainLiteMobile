@@ -8,7 +8,10 @@ export type HeaderProps = {
   style?: ViewStyle;
 };
 
+import { useRouter } from 'expo-router';
+
 export default function Header({ title, subtitle, style }: HeaderProps) {
+  const router = useRouter();
   return (
     <View style={[styles.container, style]}>
       <View>
@@ -20,7 +23,7 @@ export default function Header({ title, subtitle, style }: HeaderProps) {
           <Ionicons name="notifications-outline" size={20} color="#fff" />
           <View style={styles.notifyDot} />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, styles.actionAccent]} accessibilityRole="button" accessibilityLabel="Wallet">
+        <TouchableOpacity style={[styles.actionButton, styles.actionAccent]} accessibilityRole="button" accessibilityLabel="Wallet" onPress={() => router.push('/wallet')}>
           <Ionicons name="wallet-outline" size={20} color="#fff" />
         </TouchableOpacity>
       </View>

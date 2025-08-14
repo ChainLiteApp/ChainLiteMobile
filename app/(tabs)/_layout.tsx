@@ -66,6 +66,7 @@ export default function TabLayout() {
         name="mine"
         options={{
           title: 'Mine',
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name={focused ? 'flash' : 'flash-outline'} color={color} focused={focused} />
           ),
@@ -84,6 +85,7 @@ export default function TabLayout() {
         name="network"
         options={{
           title: 'Network',
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name={focused ? 'people' : 'people-outline'} color={color} focused={focused} />
           ),
