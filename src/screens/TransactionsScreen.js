@@ -24,20 +24,22 @@ const TransactionsScreen = () => {
       if (showLoading) setLoading(true);
       setError(null);
       
-      // Get the full blockchain
-      const chainData = await blockchainService.getChain();
+      // Fetch blocks and pending transactions in parallel
+      const [blocks, pending] = await Promise.all([
+        blockchainService.getChain(),
+        blockchainService.getPendingTransactions(),
+      ]);
       
-      // Extract all transactions from all blocks
+      // Extract confirmed transactions from blocks
       let allTransactions = [];
-      if (chainData?.chain) {
-        chainData.chain.forEach(block => {
-          if (block.transactions && block.transactions.length > 0) {
-            // Add block index and timestamp to each transaction
+      if (Array.isArray(blocks) && blocks.length > 0) {
+        blocks.forEach(block => {
+          if (Array.isArray(block.transactions) && block.transactions.length > 0) {
             const blockTransactions = block.transactions.map(tx => ({
               ...tx,
               blockIndex: block.index,
               timestamp: block.timestamp,
-              confirmed: true
+              confirmed: true,
             }));
             allTransactions = [...allTransactions, ...blockTransactions];
           }
@@ -45,12 +47,12 @@ const TransactionsScreen = () => {
       }
       
       // Add pending transactions if any
-      if (chainData?.pending_transactions?.length > 0) {
-        const pendingTxs = chainData.pending_transactions.map(tx => ({
+      if (Array.isArray(pending) && pending.length > 0) {
+        const pendingTxs = pending.map(tx => ({
           ...tx,
           blockIndex: 'Pending',
-          timestamp: new Date().toISOString(),
-          confirmed: false
+          timestamp: tx.timestamp || Date.now(),
+          confirmed: false,
         }));
         allTransactions = [...pendingTxs, ...allTransactions];
       }

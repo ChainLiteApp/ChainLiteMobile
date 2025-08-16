@@ -1,4 +1,4 @@
-import * as blockchain from '../app/services/blockchain';
+import * as blockchain from '../src/services/blockchain';
 
 async function testApiEndpoints() {
   try {

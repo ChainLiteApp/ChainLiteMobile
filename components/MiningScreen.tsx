@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { getMiningStatus, mineBlock, getWallet } from '@/src/services/blockchain';
 
 const { width } = Dimensions.get('window');
 
@@ -12,31 +13,61 @@ export default function MiningScreen() {
   const router = useRouter();
   const [miningProgress, setMiningProgress] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [nonceAttempts, setNonceAttempts] = useState(15420);
-  const [hashRate, setHashRate] = useState(6704);
+  const [nonceAttempts, setNonceAttempts] = useState(0);
+  const [hashRate, setHashRate] = useState(0);
+  const [difficulty, setDifficulty] = useState<number | null>(null);
+  const [currentBlock, setCurrentBlock] = useState<number | null>(null);
 
-  // Mining animation effect
+  // Mining animation effect (progress only)
   useEffect(() => {
-    if (isAnimating) {
-      const interval = setInterval(() => {
-        setMiningProgress(prev => {
-          if (prev >= 100) {
-            setIsAnimating(false);
-            return 0;
-          }
-          return prev + Math.random() * 15;
-        });
-        
-        // Update nonce attempts during mining
-        setNonceAttempts(prev => prev + Math.floor(Math.random() * 100));
-      }, 100);
-      return () => clearInterval(interval);
-    }
+    if (!isAnimating) return;
+    const interval = setInterval(() => {
+      setMiningProgress(prev => {
+        if (prev >= 100) {
+          return 0;
+        }
+        return Math.min(100, prev + Math.random() * 15);
+      });
+    }, 100);
+    return () => clearInterval(interval);
   }, [isAnimating]);
 
-  const startMining = () => {
-    setMiningProgress(0);
-    setIsAnimating(true);
+  // Poll mining status from backend
+  useEffect(() => {
+    let mounted = true;
+    const poll = async () => {
+      try {
+        const status = await getMiningStatus();
+        if (!mounted) return;
+        setHashRate(Math.floor(status.hashRate || 0));
+        setNonceAttempts(status.nonceAttempts || 0);
+        setDifficulty(status.difficulty ?? null);
+        setIsAnimating(!!status.inProgress);
+        setCurrentBlock(status.lastBlock?.index ?? null);
+      } catch (e) {
+        // ignore
+      }
+    };
+    poll();
+    const id = setInterval(poll, 1000);
+    return () => {
+      mounted = false;
+      clearInterval(id);
+    };
+  }, []);
+
+  const startMining = async () => {
+    try {
+      setMiningProgress(0);
+      setIsAnimating(true);
+      const wallet = await getWallet();
+      await mineBlock(wallet?.address);
+    } catch (e) {
+      // optionally show a toast
+    } finally {
+      // allow polling to update state
+      setTimeout(() => setIsAnimating(false), 800);
+    }
   };
 
   return (
@@ -66,7 +97,7 @@ export default function MiningScreen() {
         {/* Mining Card */}
         <View style={styles.miningCard}>
         <View style={styles.cardHeader}>
-          <Text style={styles.blockTitle}>Block #1248</Text>
+          <Text style={styles.blockTitle}>Block #{currentBlock ?? '—'}</Text>
           <Text style={styles.blockSubtitle}>Finding the perfect nonce...</Text>
         </View>
 
@@ -96,7 +127,7 @@ export default function MiningScreen() {
             <Text style={styles.statLabel}>Hash Rate{'\n'}(H/s)</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>4</Text>
+            <Text style={styles.statValue}>{difficulty ?? '—'}</Text>
             <Text style={styles.statLabel}>Difficulty</Text>
           </View>
           </View>

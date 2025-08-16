@@ -1,14 +1,33 @@
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View, ScrollView, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '@/components/ui/Header';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useRouter } from 'expo-router';
+import { getRegisteredNodes, getChain } from '@/src/services/blockchain';
 
 export default function NetworkScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const router = useRouter();
+  const [nodes, setNodes] = useState<string[]>([]);
+  const [latestHeight, setLatestHeight] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [n, chain] = await Promise.all([getRegisteredNodes(), getChain()]);
+        setNodes(n);
+        setLatestHeight(chain.length ? chain[chain.length - 1].index : null);
+      } catch (e) {
+        console.error('Failed to load network data', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
@@ -36,9 +55,13 @@ export default function NetworkScreen() {
                 <View style={styles.iconWrap}>
                   <Ionicons name="server-outline" size={18} color="#60a5fa" />
                 </View>
-                <Text style={[styles.status, { color: '#60a5fa' }]}>ACTIVE</Text>
+                <Text style={[styles.status, { color: '#60a5fa' }]}>{'ACTIVE'}</Text>
               </View>
-              <Text style={styles.value}>3</Text>
+              {loading ? (
+                <ActivityIndicator color="#60a5fa" />
+              ) : (
+                <Text style={styles.value}>{nodes.length}</Text>
+              )}
               <Text style={styles.label}>Nodes Online</Text>
             </View>
             <View style={styles.summaryCard}>
@@ -46,9 +69,13 @@ export default function NetworkScreen() {
                 <View style={styles.iconWrap}>
                   <Ionicons name="pulse-outline" size={18} color="#22c55e" />
                 </View>
-                <Text style={[styles.status, { color: '#22c55e' }]}>SYNCED</Text>
+                <Text style={[styles.status, { color: '#22c55e' }]}>{'SYNCED'}</Text>
               </View>
-              <Text style={styles.value}>#18,245,991</Text>
+              {loading ? (
+                <ActivityIndicator color="#22c55e" />
+              ) : (
+                <Text style={styles.value}>#{latestHeight ?? '—'}</Text>
+              )}
               <Text style={styles.label}>Latest Height</Text>
             </View>
           </View>
@@ -56,36 +83,44 @@ export default function NetworkScreen() {
           {/* Nodes List */}
           <Text style={styles.sectionTitle}>Nodes</Text>
           <View style={styles.nodesList}>
-            {[{ id: 'A', ip: '127.0.0.1:5000', role: 'Validator', status: 'Online', color: '#22c55e' },
-              { id: 'B', ip: '127.0.0.1:5001', role: 'Full Node', status: 'Syncing', color: '#f59e0b' },
-              { id: 'C', ip: '192.168.1.25:5000', role: 'Full Node', status: 'Online', color: '#22c55e' }].map(node => (
-              <TouchableOpacity
-                key={node.id}
-                style={styles.nodeRow}
-                activeOpacity={0.9}
-                onPress={() => router.push('/(tabs)/network/node-details')}
-              >
-                <View style={[styles.nodeAvatar, { backgroundColor: 'rgba(255,255,255,0.08)' }]}> 
-                  <Ionicons name="cube-outline" size={18} color="#a78bfa" />
-                </View>
-                <View style={styles.nodeMain}>
-                  <Text style={styles.nodeTitle}>Node {node.id} • {node.role}</Text>
-                  <Text style={styles.nodeSub}>{node.ip}</Text>
-                </View>
-                <View style={styles.nodeRight}>
-                  <View style={[styles.statusDot, { backgroundColor: node.color }]} />
-                  <Text style={styles.nodeStatus}>{node.status}</Text>
-                  <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.8)" />
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Add Node CTA */}
-          <TouchableOpacity
-            style={styles.addNodeBtn}
-            activeOpacity={0.95}
-            onPress={() => router.push('/(tabs)/network/add-node')}
+            {loading ? (
+              <View style={{ padding: 16 }}>
+                <ActivityIndicator color="#a78bfa" />
+              </View>
+            ) : nodes.length === 0 ? (
+              <View style={{ padding: 16 }}>
+                <Text style={{ color: 'rgba(255,255,255,0.8)' }}>No nodes registered</Text>
+              </View>
+            ) : (
+              nodes.map((node) => (
+                <TouchableOpacity
+                  key={node}
+                  style={styles.nodeRow}
+                  activeOpacity={0.9}
+                  onPress={() => router.push({ pathname: '/network/node-details', params: { endpoint: node } })}
+                  >
+                   <View style={[styles.nodeAvatar, { backgroundColor: 'rgba(255,255,255,0.08)' }]}> 
+                     <Ionicons name="cube-outline" size={18} color="#a78bfa" />
+                   </View>
+                   <View style={styles.nodeMain}>
+                     <Text style={styles.nodeTitle}>{node}</Text>
+                     <Text style={styles.nodeSub}>Registered endpoint</Text>
+                   </View>
+                   <View style={styles.nodeRight}>
+                     <View style={[styles.statusDot, { backgroundColor: '#22c55e' }]} />
+                     <Text style={styles.nodeStatus}>Online</Text>
+                     <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.8)" />
+                   </View>
+                 </TouchableOpacity>
+               ))
+             )}
+           </View>
+ 
+           {/* Add Node CTA */}
+           <TouchableOpacity
+             style={styles.addNodeBtn}
+             activeOpacity={0.95}
+             onPress={() => router.push('/network/add-node')}
           >
             <Ionicons name="add" size={18} color="#ffffff" />
             <Text style={styles.addNodeText}>Add Node</Text>

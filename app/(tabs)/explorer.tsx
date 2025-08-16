@@ -1,13 +1,49 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import Header from '@/components/ui/Header';
+import { getLatestBlocks, getChain, getPendingTransactions, Block, Transaction } from '@/src/services/blockchain';
 
 export default function ExplorerScreen() {
   const tabBarHeight = useBottomTabBarHeight();
+  const [blocks, setBlocks] = useState<Block[]>([]);
+  const [pendingTx, setPendingTx] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [chainLength, setChainLength] = useState(0);
+
+  const loadBlockchainData = async () => {
+    try {
+      setLoading(true);
+      const [latestBlocks, fullChain, pending] = await Promise.all([
+        getLatestBlocks(6),
+        getChain(),
+        getPendingTransactions()
+      ]);
+      
+      setBlocks(latestBlocks);
+      setChainLength(fullChain.length);
+      setPendingTx(pending);
+    } catch (error) {
+      console.error('Failed to load blockchain data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadBlockchainData();
+  }, []);
+
+  const formatTime = (timestamp: number) => {
+    const now = Date.now();
+    const diff = Math.floor((now - timestamp) / 1000);
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    return `${Math.floor(diff / 3600)}h ago`;
+  };
 
   return (
     <View style={styles.pageContainer}>
@@ -41,41 +77,44 @@ export default function ExplorerScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Filter Chips */}
-          {/* <View style={styles.chipsRow}>
-            {['All', 'Blocks', 'Transactions', 'Addresses'].map((label, index) => (
-              <TouchableOpacity key={label} style={[styles.chip, index === 0 && styles.chipActive]}>
-                <Text style={[styles.chipText, index === 0 && styles.chipTextActive]}>{label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View> */}
-
-          {/* Stats
+          {/* Network Stats */}
           <View style={styles.statsRow}>
-            <MetricCard icon="cube-outline" statusLabel="LIVE" statusColor="#22c55e" value="#18,245,991" label="Latest Block" style={{ marginRight: 12 }} />
-            <MetricCard icon="swap-vertical-outline" statusLabel="TPS" statusColor="#60a5fa" value="32.4" label="Transactions / sec" />
-          </View> */}
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{chainLength}</Text>
+              <Text style={styles.statLabel}>Total Blocks</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{pendingTx.length}</Text>
+              <Text style={styles.statLabel}>Pending Tx</Text>
+            </View>
+          </View>
 
           {/* Latest Blocks */}
           <Text style={styles.sectionTitle}>Latest Blocks</Text>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.blocksScroller}>
-            {[...Array(6)].map((_, i) => (
-              <View key={i} style={styles.blockCard}>
-                <View style={styles.blockHeader}>
-                  <View style={styles.blockBadge}>
-                    <Ionicons name="cube-outline" color="#a78bfa" size={14} />
-                    <Text style={styles.blockBadgeText}>Block</Text>
+            {loading ? (
+              <Text style={styles.loadingText}>Loading blocks...</Text>
+            ) : blocks.length > 0 ? (
+              blocks.map((block, i) => (
+                <View key={block.index} style={styles.blockCard}>
+                  <View style={styles.blockHeader}>
+                    <View style={styles.blockBadge}>
+                      <Ionicons name="cube-outline" color="#a78bfa" size={14} />
+                      <Text style={styles.blockBadgeText}>Block</Text>
+                    </View>
+                    <Text style={styles.blockTime}>{formatTime(block.timestamp)}</Text>
                   </View>
-                  <Text style={styles.blockTime}>2m ago</Text>
+                  <Text style={styles.blockHeight}>#{block.index}</Text>
+                  <View style={styles.blockMetaRow}>
+                    <Text style={styles.blockMeta}>Tx: {block.transactions.length}</Text>
+                    <Text style={styles.blockMeta}>Nonce: {block.nonce}</Text>
+                  </View>
+                  <Text numberOfLines={1} style={styles.blockMiner}>Hash: {block.hash}</Text>
                 </View>
-                <Text style={styles.blockHeight}>#18,245,9{i}1</Text>
-                <View style={styles.blockMetaRow}>
-                  <Text style={styles.blockMeta}>Tx: 184</Text>
-                  <Text style={styles.blockMeta}>Gas: 23.4M</Text>
-                </View>
-                <Text numberOfLines={1} style={styles.blockMiner}>Miner: 0x3a1c...9f2b</Text>
-              </View>
-            ))}
+              ))
+            ) : (
+              <Text style={styles.emptyText}>No blocks found</Text>
+            )}
           </ScrollView>
 
           {/* Latest Transactions
@@ -186,6 +225,26 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 10,
   },
+  statCard: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    marginRight: 12,
+  },
+  statValue: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  statLabel: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+  },
   blocksScroller: {
     paddingVertical: 2,
     padding: 20,
@@ -248,67 +307,15 @@ const styles = StyleSheet.create({
   blockMiner: {
     color: 'rgba(255,255,255,0.7)',
     fontSize: 12,
-    fontWeight: '500',
   },
-  txList: {
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-    backgroundColor: 'rgba(255,255,255,0.06)',
-  },
-  txRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.09)',
-  },
-  txIconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  txMain: {
-    flex: 1,
-  },
-  txHash: {
-    color: '#ffffff',
-    fontWeight: '800',
-    fontSize: 14,
-  },
-  txSub: {
-    color: 'rgba(255,255,255,0.7)',
-    marginTop: 2,
-    fontSize: 12,
+  loadingText: {
+    color: 'rgba(255,255,255,0.8)',
     fontWeight: '600',
+    paddingVertical: 8,
   },
-  txRight: {
-    alignItems: 'flex-end',
-  },
-  txValue: {
-    color: '#ffffff',
-    fontWeight: '800',
-  },
-  txStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-    gap: 6,
-  },
-  txDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#22c55e',
-  },
-  txStatusText: {
-    color: 'rgba(255,255,255,0.85)',
-    fontWeight: '700',
-    fontSize: 12,
+  emptyText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '600',
+    paddingVertical: 8,
   },
 });

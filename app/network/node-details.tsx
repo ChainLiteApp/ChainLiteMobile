@@ -1,11 +1,49 @@
-import React from 'react';
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { StyleSheet, Text, View, ScrollView, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import BackHeader from '@/components/ui/BackHeader';
+import { getRegisteredNodes, getChain } from '@/src/services/blockchain';
 
 export default function NodeDetailsScreen() {
   const router = useRouter();
+  const { endpoint } = useLocalSearchParams<{ endpoint?: string | string[] }>();
+
+  const endpointStr = useMemo(() => {
+    const raw = Array.isArray(endpoint) ? endpoint[0] : endpoint || '';
+    return raw;
+  }, [endpoint]);
+
+  const { host, port } = useMemo(() => {
+    if (!endpointStr) return { host: '—', port: '—' };
+    try {
+      const url = new URL(endpointStr.includes('://') ? endpointStr : `http://${endpointStr}`);
+      return { host: url.hostname || '—', port: url.port || '—' };
+    } catch {
+      // Fallback naive parsing
+      const parts = endpointStr.replace(/^https?:\/\//, '').split(':');
+      return { host: parts[0] || '—', port: parts[1] || '—' };
+    }
+  }, [endpointStr]);
+
+  const [loading, setLoading] = useState(true);
+  const [latestHeight, setLatestHeight] = useState<number | null>(null);
+  const [peers, setPeers] = useState<number | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [nodes, chain] = await Promise.all([getRegisteredNodes(), getChain()]);
+        setPeers(Math.max(0, (nodes?.length || 0) - 1));
+        setLatestHeight(chain.length ? chain[chain.length - 1].index : null);
+      } catch (e) {
+        console.error('Failed to load node details info', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
@@ -15,17 +53,17 @@ export default function NodeDetailsScreen() {
         <View style={styles.content}>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Overview</Text>
-            <View style={styles.row}><Text style={styles.key}>Role</Text><Text style={styles.value}>Validator</Text></View>
-            <View style={styles.row}><Text style={styles.key}>IP</Text><Text style={styles.value}>127.0.0.1</Text></View>
-            <View style={styles.row}><Text style={styles.key}>Port</Text><Text style={styles.value}>5000</Text></View>
+            <View style={styles.row}><Text style={styles.key}>Endpoint</Text><Text style={styles.value}>{endpointStr || 'Unknown'}</Text></View>
+            <View style={styles.row}><Text style={styles.key}>IP / Host</Text><Text style={styles.value}>{host}</Text></View>
+            <View style={styles.row}><Text style={styles.key}>Port</Text><Text style={styles.value}>{port}</Text></View>
             <View style={styles.row}><Text style={styles.key}>Status</Text><Text style={styles.value}>Online</Text></View>
           </View>
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Sync</Text>
-            <View style={styles.row}><Text style={styles.key}>Height</Text><Text style={styles.value}>#18,245,991</Text></View>
-            <View style={styles.row}><Text style={styles.key}>Peers</Text><Text style={styles.value}>4</Text></View>
-            <View style={styles.row}><Text style={styles.key}>Last Block</Text><Text style={styles.value}>2m ago</Text></View>
+            <View style={styles.row}><Text style={styles.key}>Height</Text><Text style={styles.value}>{loading ? <ActivityIndicator color="#22c55e" /> : latestHeight !== null ? `#${latestHeight}` : '—'}</Text></View>
+            <View style={styles.row}><Text style={styles.key}>Peers</Text><Text style={styles.value}>{loading ? <ActivityIndicator color="#22c55e" /> : peers !== null ? peers : '—'}</Text></View>
+            <View style={styles.row}><Text style={styles.key}>Last Block</Text><Text style={styles.value}>—</Text></View>
           </View>
         </View>
       </LinearGradient>

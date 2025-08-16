@@ -1,11 +1,49 @@
 import React from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View, ScrollView } from 'react-native';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View, ScrollView, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import BackHeader from '@/components/ui/BackHeader';
+import { createTransaction, getWallet } from '@/src/services/blockchain';
 
 export default function SendTransactionScreen() {
   const router = useRouter();
+  const [to, setTo] = React.useState('');
+  const [amount, setAmount] = React.useState('');
+  const [fee, setFee] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+
+  const onSend = async () => {
+    if (loading) return;
+    const value = parseFloat(amount);
+    if (!to || !/^0x[a-fA-F0-9]+$/.test(to)) {
+      Alert.alert('Invalid address', 'Please enter a valid destination address (0x...)');
+      return;
+    }
+    if (isNaN(value) || value <= 0) {
+      Alert.alert('Invalid amount', 'Please enter a valid amount greater than 0');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const wallet = await getWallet();
+      if (!wallet) {
+        Alert.alert('No wallet found', 'Please create or import a wallet first.');
+        return;
+      }
+
+      await createTransaction(wallet.address, to, value, wallet.privateKey);
+      Alert.alert('Success', 'Transaction submitted to mempool.');
+      setTo('');
+      setAmount('');
+      setFee('');
+      router.back();
+    } catch (e: any) {
+      Alert.alert('Send failed', e?.message || 'Unexpected error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
@@ -13,16 +51,37 @@ export default function SendTransactionScreen() {
         <BackHeader title="Send" onBack={() => router.back()} />
         <View style={styles.content}>
           <Text style={styles.label}>To Address</Text>
-          <TextInput placeholder="0x..." placeholderTextColor="rgba(255,255,255,0.6)" style={styles.input} />
+          <TextInput
+            placeholder="0x..."
+            placeholderTextColor="rgba(255,255,255,0.6)"
+            style={styles.input}
+            value={to}
+            onChangeText={setTo}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
 
           <Text style={styles.label}>Amount (CLT)</Text>
-          <TextInput placeholder="0.00" keyboardType="decimal-pad" placeholderTextColor="rgba(255,255,255,0.6)" style={styles.input} />
+          <TextInput
+            placeholder="0.00"
+            keyboardType="decimal-pad"
+            placeholderTextColor="rgba(255,255,255,0.6)"
+            style={styles.input}
+            value={amount}
+            onChangeText={setAmount}
+          />
 
           <Text style={styles.label}>Fee</Text>
-          <TextInput placeholder="Standard" placeholderTextColor="rgba(255,255,255,0.6)" style={styles.input} />
+          <TextInput
+            placeholder="Standard"
+            placeholderTextColor="rgba(255,255,255,0.6)"
+            style={styles.input}
+            value={fee}
+            onChangeText={setFee}
+          />
 
-          <TouchableOpacity style={styles.primaryBtn} activeOpacity={0.95}>
-            <Text style={styles.primaryText}>Send</Text>
+          <TouchableOpacity style={[styles.primaryBtn, loading && { opacity: 0.7 }]} activeOpacity={0.95} onPress={onSend} disabled={loading}>
+            <Text style={styles.primaryText}>{loading ? 'Sending...' : 'Send'}</Text>
           </TouchableOpacity>
         </View>
       </LinearGradient>

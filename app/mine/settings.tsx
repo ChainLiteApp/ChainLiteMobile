@@ -1,13 +1,29 @@
-import React from 'react';
-import { StyleSheet, Text, View, ScrollView, Switch } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, ScrollView, Switch, TextInput, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import BackHeader from '@/components/ui/BackHeader';
+import { getApiBaseUrl, saveApiBaseUrl } from '@/src/services/blockchain';
 
 export default function MiningSettingsScreen() {
   const router = useRouter();
-  const [autoMine, setAutoMine] = React.useState(true);
-  const [sound, setSound] = React.useState(false);
+  const [autoMine, setAutoMine] = useState(true);
+  const [sound, setSound] = useState(false);
+  const [apiBaseUrl, setApiBaseUrlState] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setApiBaseUrlState(String(getApiBaseUrl() || ''));
+  }, []);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      await saveApiBaseUrl(apiBaseUrl.trim());
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
@@ -24,6 +40,26 @@ export default function MiningSettingsScreen() {
               <Text style={styles.itemTitle}>Sound effects</Text>
               <Switch value={sound} onValueChange={setSound} />
             </View>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>API Base URL</Text>
+            <Text style={styles.sectionSub}>This is the ChainLite node your app connects to.</Text>
+            <View style={styles.inputRow}>
+              <TextInput
+                value={apiBaseUrl}
+                onChangeText={setApiBaseUrlState}
+                placeholder="http://127.0.0.1:8000"
+                placeholderTextColor="rgba(255,255,255,0.5)"
+                style={styles.input}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+              />
+            </View>
+            <TouchableOpacity style={[styles.saveBtn, saving && styles.saveBtnDisabled]} onPress={handleSave} disabled={saving}>
+              <Text style={styles.saveBtnText}>{saving ? 'Saving...' : 'Save'}</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </LinearGradient>
@@ -51,4 +87,11 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.07)',
   },
   itemTitle: { color: '#ffffff', fontWeight: '700' },
+  sectionTitle: { color: '#ffffff', fontWeight: '800', fontSize: 16, marginBottom: 6 },
+  sectionSub: { color: 'rgba(255,255,255,0.7)', marginBottom: 10 },
+  inputRow: { borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)', backgroundColor: 'rgba(255,255,255,0.06)' },
+  input: { color: '#ffffff', paddingHorizontal: 12, paddingVertical: 12 },
+  saveBtn: { marginTop: 12, height: 44, borderRadius: 12, backgroundColor: '#7a2bca', alignItems: 'center', justifyContent: 'center' },
+  saveBtnDisabled: { backgroundColor: '#6b21a8' },
+  saveBtnText: { color: '#ffffff', fontWeight: '800' },
 });
