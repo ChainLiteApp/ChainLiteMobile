@@ -29,6 +29,9 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="mining-tutorial" options={{ headerShown: false }} />
+        <Stack.Screen name="network-builder" options={{ headerShown: false }} />
+        <Stack.Screen name="block-explorer" options={{ headerShown: false }} />
+        <Stack.Screen name="consensus-challenge" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="light" backgroundColor="transparent" translucent={true} />

@@ -41,6 +41,7 @@ export default function LearnScreen() {
     subtitle: 'Connect nodes and sync blockchain',
     colors: ['#60a5fa', '#06b6d4'],
     progress: 30,
+    onPress: () => router.push('/network-builder'),
   },
   {
     icon: 'eye-outline',
@@ -48,6 +49,7 @@ export default function LearnScreen() {
     subtitle: 'Dive deep into blockchain data',
     colors: ['#a855f7', '#6366f1'],
     progress: 70,
+    onPress: () => router.push('/block-explorer'),
   },
   {
     icon: 'bookmark-outline',
@@ -55,6 +57,7 @@ export default function LearnScreen() {
     subtitle: 'Resolve network conflicts',
     colors: ['#fb923c', '#ef4444'],
     progress: 100,
+    onPress: () => router.push('/consensus-challenge'),
   },
   ];
 
