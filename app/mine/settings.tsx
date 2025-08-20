@@ -1,12 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, Switch, TextInput, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 import BackHeader from '@/components/ui/BackHeader';
 import { getApiBaseUrl, saveApiBaseUrl } from '@/src/services/blockchain';
 
 export default function MiningSettingsScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
+  useLayoutEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
   const [autoMine, setAutoMine] = useState(true);
   const [sound, setSound] = useState(false);
   const [apiBaseUrl, setApiBaseUrlState] = useState('');

@@ -62,7 +62,6 @@ export default function LearnScreen() {
   ];
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
     <LinearGradient
       colors={['#1d0b3b', '#7a2bca']}
       start={{ x: 0, y: 0 }}
@@ -95,7 +94,6 @@ export default function LearnScreen() {
         </View>
       </ScrollView>
     </LinearGradient>
-    </ScrollView>
   );
 }
 

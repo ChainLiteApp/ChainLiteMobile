@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 import BackHeader from '@/components/ui/BackHeader';
 import { getLatestBlocks, Block } from '@/src/services/blockchain';
 
@@ -17,6 +17,10 @@ const formatTimestamp = (timestamp: number) => {
 
 export default function MiningHistoryScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
+  useLayoutEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -6,9 +6,9 @@ import {
   TouchableOpacity, 
   Alert, 
   ScrollView, 
-  ActivityIndicator,
   Dimensions,
-  Share
+  Share,
+  RefreshControl
 } from 'react-native';
 import { useWallet } from '../contexts/WalletContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,7 +19,7 @@ import QRCode from 'react-native-qrcode-svg';
 const { width } = Dimensions.get('window');
 
 const WalletScreen = ({ navigation }) => {
-  const { wallet, balance, clearWallet, refreshBalance } = useWallet();
+  const { wallet, balance, clearWallet, updateBalance, createNewWallet } = useWallet();
   const [showPrivateKey, setShowPrivateKey] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showQrCode, setShowQrCode] = useState(false);
@@ -37,7 +37,9 @@ const WalletScreen = ({ navigation }) => {
   const onRefresh = async () => {
     try {
       setRefreshing(true);
-      await refreshBalance();
+      if (wallet?.address) {
+        await updateBalance(wallet.address);
+      }
     } catch (error) {
       console.error('Error refreshing balance:', error);
       Alert.alert('Error', 'Failed to refresh balance');
@@ -76,7 +78,7 @@ const WalletScreen = ({ navigation }) => {
         <Text style={styles.noWalletSubtext}>Create a new wallet to start using ChainLite</Text>
         <TouchableOpacity 
           style={styles.primaryButton}
-          onPress={() => blockchainService.createWallet()}
+          onPress={createNewWallet}
         >
           <Text style={styles.primaryButtonText}>Create New Wallet</Text>
         </TouchableOpacity>
@@ -529,48 +531,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 10,
-  },
-    color: '#666',
-    fontSize: 14,
-  },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  toggleButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-  },
-  privateKeyContainer: {
-    marginTop: 12,
-    padding: 12,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  privateKey: {
-    flex: 1,
-    fontFamily: 'monospace',
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  dangerButton: {
-    backgroundColor: '#FF3B30',
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: '600',
   },
 });
 

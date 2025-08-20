@@ -1,9 +1,8 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
 import { useEffect } from 'react';
+import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { initializeApiBaseUrl } from '@/src/services/blockchain';
@@ -32,9 +31,11 @@ export default function RootLayout() {
         <Stack.Screen name="network-builder" options={{ headerShown: false }} />
         <Stack.Screen name="block-explorer" options={{ headerShown: false }} />
         <Stack.Screen name="consensus-challenge" options={{ headerShown: false }} />
+        <Stack.Screen name="mine" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
+        <Stack.Screen name='wallet' options={ {headerShown: false} } />
+        <Stack.Screen name='send-transaction' options={ {headerShown: false} } />
       </Stack>
-      <StatusBar style="light" backgroundColor="transparent" translucent={true} />
     </ThemeProvider>
   );
 }
