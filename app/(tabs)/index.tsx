@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -25,6 +25,36 @@ type Module = {
 export default function LearnScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const router = useRouter();
+  const [blocksMined, setBlocksMined] = useState<number>(0);
+  const [nodeCount, setNodeCount] = useState<number>(0);
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const [chainLenObj, nodes] = await Promise.all([
+          (async () => {
+            const svc = await import('@/src/services/blockchain');
+            const chain = await svc.getChain();
+            return { length: chain?.length ?? 0 };
+          })(),
+          (async () => {
+            const svc = await import('@/src/services/blockchain');
+            return svc.getRegisteredNodes();
+          })(),
+        ]);
+        if (!mounted) return;
+        setBlocksMined(chainLenObj.length);
+        setNodeCount(nodes?.length ?? 0);
+      } catch (e) {
+        // keep defaults on failure
+      }
+    };
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const modules: Module[] = [
   {
@@ -77,8 +107,8 @@ export default function LearnScreen() {
 
         {/* Stats Cards */}
         <View style={styles.statsRow}>
-          <MetricCard icon="flash-outline" statusLabel="LIVE" statusColor="#22c55e" value="1,247" label="Blocks Mined" style={{ marginRight: 12 }} />
-          <MetricCard icon="power-outline" statusLabel="ACTIVE" statusColor="#60a5fa" value="3" label="Network Nodes" />
+          <MetricCard icon="flash-outline" statusLabel="LIVE" statusColor="#22c55e" value={String(blocksMined)} label="Blocks Mined" style={{ marginRight: 12 }} />
+          <MetricCard icon="power-outline" statusLabel="ACTIVE" statusColor="#60a5fa" value={String(nodeCount)} label="Network Nodes" />
         </View>
 
         {/* Section Title */}

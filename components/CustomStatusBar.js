@@ -1,10 +1,9 @@
+import React from 'react';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import { StatusBar, Platform } from 'react-native';
 import { useColorScheme } from 'react-native';
-import { useTheme } from '../constants/Colors';
 
 export default function CustomStatusBar() {
-  const theme = useTheme();
   const colorScheme = useColorScheme();
   
   // For Android, we'll use React Native's StatusBar

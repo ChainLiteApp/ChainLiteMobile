@@ -52,13 +52,12 @@ export default function ExplorerScreen() {
         style={styles.gradientContainer}
         contentContainerStyle={styles.scrollContent}
       >
-    <LinearGradient
-  colors={["#3D4E81", "#5753C9", "#6E7FF3"]}
-  start={{ x: 0, y: 0 }}
-  end={{ x: 1, y: 0 }}
-  locations={[0, 0.55, 1]}
-  style={styles.container}
->
+          <LinearGradient
+            colors={["#3D4E81", "#5753C9", "#6E7FF3"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            locations={[0, 0.55, 1]}
+            style={styles.container}>
 
     
          
@@ -141,7 +140,7 @@ export default function ExplorerScreen() {
             ))}
           </View> */}
           </View>
-        </LinearGradient>
+          </LinearGradient>
       </ScrollView>
     </View>
   );
