@@ -5,12 +5,14 @@ import React, { useEffect, useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { getMiningStatus, mineBlock, getWallet } from '@/src/services/blockchain';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
 export default function MiningScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [miningProgress, setMiningProgress] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [nonceAttempts, setNonceAttempts] = useState(0);
@@ -71,7 +73,7 @@ export default function MiningScreen() {
   };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
       <LinearGradient
         colors={['#0b331f', '#0e2a1e']}
         start={{ x: 0, y: 0 }}
@@ -79,7 +81,7 @@ export default function MiningScreen() {
         style={[styles.container, { paddingBottom: tabBarHeight + 16 }]}
       >
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <View>
             <Text style={styles.title}>Mining</Text>
             <Text style={styles.subtitle}>Real-time blockchain mining</Text>
@@ -167,6 +169,9 @@ export default function MiningScreen() {
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+  },
   container: {
     flex: 1,
     paddingHorizontal: 20,

@@ -40,7 +40,7 @@ export default function MiningHistoryScreen() {
   }, []);
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
       <LinearGradient colors={["#0f0a22", "#0f0a22"]} style={styles.container}>
         <BackHeader title="Mining History" onBack={() => router.back()} />
 

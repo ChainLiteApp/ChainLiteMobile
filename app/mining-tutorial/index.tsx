@@ -2,7 +2,7 @@ import BackHeader from '@/components/ui/BackHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { Href, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,7 +12,7 @@ interface TutorialStep {
   label: string;
   done: boolean;
   index: number;
-  route: string;
+  route: Href;
 }
 
 export default function MiningTutorialScreen() {
@@ -27,11 +27,11 @@ export default function MiningTutorialScreen() {
     (async () => {
       const progress = await getTutorialProgress();
       const tutorialSteps: TutorialStep[] = [
-        { label: 'What is Mining?', route: '/mining-tutorial/what-is-mining', index: 1 },
-        { label: 'Proof of Work', route: '/mining-tutorial/proof-of-work', index: 2 },
-        { label: 'Finding the Nonce', route: '/mining-tutorial/finding-the-nonce', index: 3 },
-        { label: 'Block Validation', route: '/mining-tutorial/block-validation', index: 4 },
-        { label: 'Mining Rewards', route: '/mining-tutorial/mining-rewards', index: 5 },
+        { label: 'What is Mining?', route: '/mining-tutorial/what-is-mining' as Href, index: 1 },
+        { label: 'Proof of Work', route: '/mining-tutorial/proof-of-work' as Href, index: 2 },
+        { label: 'Finding the Nonce', route: '/mining-tutorial/finding-the-nonce' as Href, index: 3 },
+        { label: 'Block Validation', route: '/mining-tutorial/block-validation' as Href, index: 4 },
+        { label: 'Mining Rewards', route: '/mining-tutorial/mining-rewards' as Href, index: 5 },
       ].map(step => ({
         ...step,
         done: progress.completedSteps.includes(step.index)
@@ -45,9 +45,9 @@ export default function MiningTutorialScreen() {
     router.push(step.route);
   };
   
-  const getNextIncompleteStep = () => {
+  const getNextIncompleteStep = (): Href => {
     const nextStep = steps.find(step => !step.done) || steps[0];
-    return nextStep?.route || '/mining-tutorial/what-is-mining';
+    return (nextStep?.route || '/mining-tutorial/what-is-mining') as Href;
   };
 
   return (

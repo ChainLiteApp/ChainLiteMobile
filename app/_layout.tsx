@@ -26,16 +26,16 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' } }}>
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen name="mining-tutorial" options={{ headerShown: false }} />
         <Stack.Screen name="network-builder" options={{ headerShown: false }} />
         <Stack.Screen name="block-explorer" options={{ headerShown: false }} />
         <Stack.Screen name="consensus-challenge" options={{ headerShown: false }} />
-        <Stack.Screen name="mine" options={{ headerShown: false }} />
+        {/* removed legacy 'mine' stack route; using tabbed version at /(tabs)/mine */}
         <Stack.Screen name="+not-found" />
-        <Stack.Screen name='wallet' options={ {headerShown: false} } />
-        <Stack.Screen name='send-transaction' options={ {headerShown: false} } />
+        <Stack.Screen name='wallet' />
+        <Stack.Screen name='send-transaction' />
       </Stack>
     </ThemeProvider>
   );

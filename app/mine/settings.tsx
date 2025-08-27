@@ -30,7 +30,7 @@ export default function MiningSettingsScreen() {
   };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
       <LinearGradient colors={["#0f0a22", "#0f0a22"]} style={styles.container}>
         <BackHeader title="Mining Settings" onBack={() => router.back()} />
 

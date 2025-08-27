@@ -30,7 +30,7 @@ export default function NetworkScreen() {
   }, []);
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
       <LinearGradient
         colors={["#0f0a22", "#0f0a22"]}
         start={{ x: 0, y: 0 }}
@@ -132,6 +132,9 @@ export default function NetworkScreen() {
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+  },
   container: {
     flex: 1,
     paddingVertical: 20,

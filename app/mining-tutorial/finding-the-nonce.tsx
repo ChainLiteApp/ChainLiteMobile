@@ -13,7 +13,7 @@ export default function FindingTheNonce() {
     updateTutorialProgress(3, true);
   }, []);
 
-  const handleNext = () => router.push('block-validation');
+  const handleNext = () => router.push('/mining-tutorial/block-validation');
   const handlePrevious = () => router.back();
 
   return (

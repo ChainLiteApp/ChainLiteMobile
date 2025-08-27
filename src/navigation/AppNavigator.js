@@ -15,8 +15,18 @@ export default function AppNavigator() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerShown: false,
-        cardStyle: { backgroundColor: '#0F172A' }
+        headerShown: true,
+        cardStyle: { backgroundColor: '#0F172A' },
+        headerStyle: {
+          backgroundColor: '#0F172A',
+          elevation: 0,
+          shadowOpacity: 0,
+          borderBottomWidth: 0,
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
       }}
     >
       <Stack.Screen 

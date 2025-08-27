@@ -72,7 +72,7 @@ export default function WalletScreen() {
   };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
       <LinearGradient colors={["#0f0a22", "#0f0a22"]} style={styles.container}>
         <BackHeader title="Wallet" onBack={() => router.back()} />
 
@@ -113,6 +113,9 @@ export default function WalletScreen() {
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+  },
   container: { flex: 1, backgroundColor: '#0f0a22' },
   content: { paddingHorizontal: 20, paddingBottom: 24 },
   balanceCard: {

@@ -50,6 +50,7 @@ export default function ExplorerScreen() {
       <ScrollView 
         showsVerticalScrollIndicator={false}
         style={styles.gradientContainer}
+        contentContainerStyle={styles.scrollContent}
       >
     <LinearGradient
   colors={["#3D4E81", "#5753C9", "#6E7FF3"]}
@@ -91,7 +92,7 @@ export default function ExplorerScreen() {
 
           {/* Latest Blocks */}
           <Text style={styles.sectionTitle}>Latest Blocks</Text>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.blocksScroller}>
+          <View style={styles.blocksScroller}>
             {loading ? (
               <Text style={styles.loadingText}>Loading blocks...</Text>
             ) : blocks.length > 0 ? (
@@ -115,7 +116,7 @@ export default function ExplorerScreen() {
             ) : (
               <Text style={styles.emptyText}>No blocks found</Text>
             )}
-          </ScrollView>
+          </View>
 
           {/* Latest Transactions
           <Text style={styles.sectionTitle}>Latest Transactions</Text>
@@ -152,6 +153,9 @@ const styles = StyleSheet.create({
   },
   gradientContainer: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   container: {
     flex: 1,

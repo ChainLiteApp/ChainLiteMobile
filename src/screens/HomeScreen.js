@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { Dimensions, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ModuleCard from '../../components/ui/ModuleCard';
@@ -35,6 +36,13 @@ const HomeScreen = () => {
       setRefreshing(false);
     }
   };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Force status bar style when this screen is focused
+      StatusBar.setBarStyle('light-content');
+    }, [])
+  );
 
   useEffect(() => {
     fetchBlockchainData();
@@ -164,7 +172,7 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff', // Darker purple background to match screenshot
+    backgroundColor: '#0F172A', // Match the dark theme background
   },
   scrollView: {
     flex: 1,

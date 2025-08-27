@@ -32,7 +32,7 @@ export default function AddNodeScreen() {
   };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
       <LinearGradient colors={["#0f0a22", "#0f0a22"]} style={styles.container}>
         <BackHeader title="Add Node" onBack={() => router.back()} />
 
@@ -56,6 +56,9 @@ export default function AddNodeScreen() {
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: '#0f0a22',

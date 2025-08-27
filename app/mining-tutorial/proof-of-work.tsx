@@ -90,7 +90,7 @@ export default function ProofOfWork() {
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 20, paddingBottom: 100 },
   card: {
@@ -220,4 +220,4 @@ const styles = {
     fontSize: 16,
     fontWeight: '600',
   },
-};
+});

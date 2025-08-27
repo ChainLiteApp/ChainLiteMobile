@@ -13,7 +13,7 @@ export default function BlockValidation() {
     updateTutorialProgress(4, true);
   }, []);
 
-  const handleNext = () => router.push('mining-rewards');
+  const handleNext = () => router.push('/mining-tutorial/mining-rewards');
   const handlePrevious = () => router.back();
 
   const steps = [

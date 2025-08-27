@@ -1,5 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
+import type { AxiosRequestConfig } from 'axios';
 import { Platform } from 'react-native';
 
 // Types
@@ -36,12 +37,14 @@ interface MineResponse {
 }
 
 interface RegisterNodeResponse {
-  message: string;
-  total_nodes: string[];
+  message?: string;
+  registered_nodes?: string[];
+  total_nodes?: string[];
+  total_count?: number;
 }
 
 interface ConsensusResponse {
-  message: string;
+  message?: string;
   chain?: Block[];
 }
 
@@ -66,6 +69,28 @@ interface MiningStatusResponse {
   lastBlock?: { index: number; hash: string; timestamp: number };
 }
 
+// Address activity detailed shape (as per FastAPI docs)
+export interface AddressActivity {
+  address: string;
+  sent: Array<{
+    recipient: string;
+    amount: string | number;
+    timestamp: string | number;
+    hash: string;
+    block_index: string | number | null;
+  }>;
+  received: Array<{
+    sender: string;
+    amount: string | number;
+    timestamp: string | number;
+    hash: string;
+    block_index: string | number | null;
+  }>;
+  total_sent: number;
+  total_received: number;
+  balance: number;
+}
+
 // Configuration - Update this with your actual server IP
 const API_BASE_URL_DEFAULT = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://127.0.0.1:8000';
 const API_BASE_URL_ENV = (process.env as any)?.EXPO_PUBLIC_API_BASE_URL as string | undefined;
@@ -81,19 +106,61 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 seconds
+  timeout: 20000, // 20 seconds to reduce transient timeouts
+});
+
+// ---------- Logging: cURL for each request ----------
+const toCurl = (cfg: AxiosRequestConfig): string => {
+  const method = (cfg.method || 'get').toUpperCase();
+  const base = (cfg.baseURL || '').replace(/\/$/, '');
+  const path = (cfg.url || '').startsWith('/') ? (cfg.url || '') : `/${cfg.url || ''}`;
+  const qs = cfg.params ? `?${new URLSearchParams(cfg.params as Record<string, any>).toString()}` : '';
+  const url = `${base}${path}${qs}`;
+
+  const headerEntries: string[] = [];
+  const headers = (cfg.headers || {}) as Record<string, any>;
+  Object.keys(headers).forEach((k) => {
+    const v = headers[k];
+    if (v == null) return;
+    const key = String(k).toLowerCase();
+    if (['content-length', 'host'].includes(key)) return; // omit noisy headers
+    headerEntries.push(`-H '${k}: ${String(v)}'`);
+  });
+
+  let dataFlag = '';
+  const data = (cfg as any).data;
+  if (data != null && data !== '') {
+    try {
+      const body = typeof data === 'string' ? data : JSON.stringify(data);
+      dataFlag = `--data '${body.replace(/'/g, "'\\''")}'`;
+    } catch {}
+  }
+
+  return `curl -X ${method} '${url}' ${headerEntries.join(' ')} ${dataFlag}`.trim();
+};
+
+api.interceptors.request.use((req) => {
+  // Ensure baseURL is present for toCurl
+  const curl = toCurl({ ...req, baseURL: req.baseURL || api.defaults.baseURL });
+  console.log('[HTTP cURL]', curl);
+  return req;
 });
 
 // Helper function to handle API errors
 const handleApiError = (error: any, defaultMessage: string) => {
   if (error.response) {
-    console.error('API Error Response:', error.response.data);
+    console.log('API Error Response:', error.response.data);
     throw new Error(error.response.data.message || error.response.data.detail || defaultMessage);
   } else if (error.request) {
-    console.error('API No Response:', error.request);
+    try {
+      const curl = toCurl({ ...(error.config || {}), baseURL: (error.config?.baseURL) || api.defaults.baseURL });
+      console.log('[HTTP FAILED]', curl);
+    } catch {
+      console.log('API No Response');
+    }
     throw new Error('No response from server. Please check your connection.');
   } else {
-    console.error('API Setup Error:', error.message);
+    console.log('API Setup Error:', error.message);
     throw new Error(defaultMessage);
   }
 };
@@ -112,7 +179,13 @@ export const initializeApiBaseUrl = async () => {
   try {
     // Priority: Env var > SecureStore > Platform default
     const stored = await SecureStore.getItemAsync(SECURE_STORE_KEYS.API_BASE_URL);
-    const chosen = API_BASE_URL_ENV || stored || API_BASE_URL_DEFAULT;
+    let chosen = API_BASE_URL_ENV || stored || API_BASE_URL_DEFAULT;
+    // If a previous Android-emulator host was saved but we're not on Android, correct it
+    if (Platform.OS !== 'android' && chosen?.includes('10.0.2.2')) {
+      const corrected = chosen.replace('10.0.2.2', '127.0.0.1');
+      chosen = corrected;
+      try { await SecureStore.setItemAsync(SECURE_STORE_KEYS.API_BASE_URL, corrected); } catch {}
+    }
     setApiBaseUrl(chosen);
   } catch (e) {
     // fallback to default on any error
@@ -137,17 +210,16 @@ export const getChain = async (): Promise<Block[]> => {
     const response = await api.get<BlockchainInfoResponse>('/chain');
     return response.data?.data?.chain || [];
   } catch (error) {
-    console.error('Error in getChain:', error);
     return handleApiError(error, 'Failed to fetch blockchain');
   }
 };
 
 export const getPendingTransactions = async (): Promise<Transaction[]> => {
   try {
-    const response = await api.get<PendingTxResponse>('/pending_tx');
-    return response.data?.transactions || [];
+    const response = await api.get<PendingTxResponse | { data?: PendingTxResponse }>('/pending_tx');
+    const d: any = response.data as any;
+    return d?.data?.transactions || d?.transactions || [];
   } catch (error) {
-    console.error('Error in getPendingTransactions:', error);
     return handleApiError(error, 'Failed to fetch pending transactions');
   }
 };
@@ -168,7 +240,7 @@ export const createTransaction = async (
 
     const signature = await signTransaction(transaction, privateKey);
 
-    const response = await api.post<Transaction>(
+    const response = await api.post<Transaction | { data?: { transaction?: Transaction } }>(
       '/transactions',
       {
         ...transaction,
@@ -179,19 +251,21 @@ export const createTransaction = async (
       }
     );
 
-    return response.data;
+    const d: any = response.data as any;
+    // Support both wrapped and plain formats
+    return d?.data?.transaction || d;
   } catch (error) {
-    console.error('Error in createTransaction:', error);
     return handleApiError(error, 'Failed to create transaction');
   }
 };
 
 export const mineBlock = async (minerAddress?: string): Promise<MineResponse> => {
   try {
-    const response = await api.get<MineResponse>('/mine', {
+    const response = await api.get<MineResponse | { data?: MineResponse }>('/mine', {
       params: minerAddress ? { miner_address: minerAddress } : undefined,
     });
-    return response.data;
+    const d: any = response.data as any;
+    return d?.data || d;
   } catch (error) {
     return handleApiError(error, 'Failed to mine block');
   }
@@ -199,10 +273,14 @@ export const mineBlock = async (minerAddress?: string): Promise<MineResponse> =>
 
 export const registerNode = async (nodeUrl: string): Promise<RegisterNodeResponse> => {
   try {
-    const response = await api.post<RegisterNodeResponse>('/nodes/register', {
-      nodes: [nodeUrl],
-    });
-    return response.data;
+    const response = await api.post<RegisterNodeResponse | { data?: RegisterNodeResponse }>(
+      '/nodes/register',
+      {
+        nodes: [nodeUrl],
+      }
+    );
+    const d: any = response.data as any;
+    return d?.data || d;
   } catch (error) {
     return handleApiError(error, 'Failed to register node');
   }
@@ -213,33 +291,38 @@ export const getRegisteredNodes = async (): Promise<string[]> => {
     const response = await api.get<{ data: { nodes: string[] } }>('/nodes');
     return response.data?.data?.nodes || [];
   } catch (error) {
-    console.error('Error in getRegisteredNodes:', error);
     return handleApiError(error, 'Failed to fetch registered nodes');
   }
 };
 
 export const resolveConflicts = async (): Promise<ConsensusResponse> => {
   try {
-    const response = await api.get<ConsensusResponse>('/nodes/resolve');
-    return response.data;
+    const response = await api.get<ConsensusResponse | { data?: ConsensusResponse }>('/nodes/resolve');
+    const d: any = response.data as any;
+    return d?.data || d;
   } catch (error) {
     return handleApiError(error, 'Failed to resolve conflicts');
   }
 };
 
-export const unregisterNode = async (hostPort: string): Promise<{ message: string }> => {
+export const unregisterNode = async (hostPort: string): Promise<{ message?: string; removed_node?: string; total_nodes?: string[]; total_count?: number }> => {
   try {
-    const response = await api.delete<{ message: string }>(`/nodes/${hostPort}`);
-    return response.data;
+    const response = await api.delete<{ message?: string } | { data?: { removed_node?: string; total_nodes?: string[]; total_count?: number } }>(`/nodes/${hostPort}`);
+    const d: any = response.data as any;
+    return d?.data || d;
   } catch (error) {
     return handleApiError(error, 'Failed to unregister node');
   }
 };
 
-export const unregisterNodes = async (nodes: string[]): Promise<{ message: string }> => {
+export const unregisterNodes = async (nodes: string[]): Promise<{ message?: string; removed_nodes?: string[]; total_nodes?: string[]; total_count?: number }> => {
   try {
-    const response = await api.post<{ message: string }>(`/nodes/unregister`, { nodes });
-    return response.data;
+    const response = await api.post<{ message?: string } | { data?: { removed_nodes?: string[]; total_nodes?: string[]; total_count?: number } }>(
+      `/nodes/unregister`,
+      { nodes }
+    );
+    const d: any = response.data as any;
+    return d?.data || d;
   } catch (error) {
     return handleApiError(error, 'Failed to unregister nodes');
   }
@@ -303,10 +386,11 @@ export const getTransactionsForAddress = async (
   options?: { limit?: number; before?: number }
 ): Promise<Transaction[]> => {
   try {
-    const response = await api.get<LatestTransactionsResponse>(`/address/${address}/transactions`, {
+    const response = await api.get<LatestTransactionsResponse | { data?: { transactions?: Transaction[] } }>(`/address/${address}/transactions`, {
       params: { limit: options?.limit ?? 20, before: options?.before },
     });
-    return response.data?.data?.transactions || [];
+    const d: any = response.data as any;
+    return d?.data?.transactions || d?.transactions || [];
   } catch (error) {
     return handleApiError(error, 'Failed to fetch address transactions');
   }
@@ -314,10 +398,24 @@ export const getTransactionsForAddress = async (
 
 export const getMiningStatus = async (): Promise<MiningStatusResponse> => {
   try {
-    const response = await api.get<MiningStatusResponse>('/mining/status');
-    return response.data;
+    const response = await api.get<MiningStatusResponse | { data?: MiningStatusResponse }>('/mining/status');
+    const d: any = response.data as any;
+    return d?.data || d;
   } catch (error) {
     return handleApiError(error, 'Failed to fetch mining status');
+  }
+};
+
+// Full address activity helper (non-breaking: new method)
+export const getAddressActivity = async (address: string, options?: { limit?: number; before?: number }): Promise<AddressActivity> => {
+  try {
+    const response = await api.get<{ data?: AddressActivity } | AddressActivity>(`/address/${address}/transactions`, {
+      params: { limit: options?.limit ?? 20, before: options?.before },
+    });
+    const d: any = response.data as any;
+    return d?.data || d;
+  } catch (error) {
+    return handleApiError(error, 'Failed to fetch address activity');
   }
 };
 

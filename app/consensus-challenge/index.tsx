@@ -1,13 +1,13 @@
 import BackHeader from '@/components/ui/BackHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { Href, useRouter } from 'expo-router';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function ConsensusChallenge() {
   const router = useRouter();
-  const steps = [
+  const steps: { label: string; route: Href; index: number }[] = [
     { label: 'Detect Conflicts', route: '/consensus-challenge/detect-conflicts', index: 1 },
     { label: 'Competing Forks', route: '/consensus-challenge/competing-forks', index: 2 },
     { label: 'Resolve Consensus', route: '/consensus-challenge/resolve-consensus', index: 3 },

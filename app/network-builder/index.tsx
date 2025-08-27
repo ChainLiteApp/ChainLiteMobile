@@ -1,13 +1,13 @@
 import BackHeader from '@/components/ui/BackHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { Href, useRouter } from 'expo-router';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function NetworkBuilderScreen() {
   const router = useRouter();
-  const steps = [
+  const steps: { label: string; route: Href; index: number }[] = [
     { label: 'Connect Nodes', route: '/network-builder/connect-nodes', index: 1 },
     { label: 'Sync the Chain', route: '/network-builder/sync-chain', index: 2 },
     { label: 'Broadcast Transactions', route: '/network-builder/broadcast-transactions', index: 3 },

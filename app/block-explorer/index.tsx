@@ -1,13 +1,13 @@
 import BackHeader from '@/components/ui/BackHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { Href, useRouter } from 'expo-router';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function BlockExplorerLearn() {
   const router = useRouter();
-  const steps = [
+  const steps: { label: string; route: Href; index: number }[] = [
     { label: 'Understand Blocks', route: '/block-explorer/understanding-blocks', index: 1 },
     { label: 'View Transactions', route: '/block-explorer/view-transactions', index: 2 },
     { label: 'Trace Addresses', route: '/block-explorer/trace-addresses', index: 3 },
