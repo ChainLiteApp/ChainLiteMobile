@@ -1,306 +1,293 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  ScrollView, 
-  StyleSheet,
-  TouchableOpacity,
-  RefreshControl,
-  Alert
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { StatusBar } from 'expo-status-bar';
+import React, { useEffect, useState } from 'react';
+import { Dimensions, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import ModuleCard from '../../components/ui/ModuleCard';
 import * as blockchainService from '../services/blockchain';
-import { useNavigation } from '@react-navigation/native';
+
+const { width } = Dimensions.get('window');
 
 const HomeScreen = () => {
   const navigation = useNavigation();
-  const [blockchainInfo, setBlockchainInfo] = useState({
-    chainLength: 0,
-    pendingTransactions: 0,
-    nodes: 0,
-    lastBlock: null,
-  });
   const [refreshing, setRefreshing] = useState(false);
-  const [isMining, setIsMining] = useState(false);
+  const [blockchainInfo, setBlockchainInfo] = useState({
+    chainLength: 1247,
+    nodes: 3,
+  });
+  const [activeTab, setActiveTab] = useState('home');
 
   const fetchBlockchainData = async () => {
     try {
       setRefreshing(true);
-      const [chain, pendingTx, nodes] = await Promise.all([
+      const [chain, , nodes] = await Promise.all([
         blockchainService.getChain(),
         blockchainService.getPendingTransactions(),
         blockchainService.getRegisteredNodes(),
       ]);
-
       setBlockchainInfo({
         chainLength: chain.length,
-        pendingTransactions: pendingTx.length,
         nodes: nodes.length,
-        lastBlock: chain[chain.length - 1],
       });
     } catch (error) {
-      console.error('Error fetching blockchain data:', error);
-      Alert.alert('Error', 'Failed to fetch blockchain data');
+      // fallback to demo values
+      setBlockchainInfo({ chainLength: 1247, nodes: 3 });
     } finally {
       setRefreshing(false);
     }
   };
 
-  const handleMineBlock = async () => {
-    try {
-      setIsMining(true);
-      await blockchainService.mineBlock();
-      await fetchBlockchainData();
-      Alert.alert('Success', 'New block mined successfully!');
-    } catch (error) {
-      console.error('Error mining block:', error);
-      Alert.alert('Error', 'Failed to mine block');
-    } finally {
-      setIsMining(false);
-    }
-  };
-
-  const navigateTo = (screen) => {
-    navigation.navigate(screen);
-  };
+  useFocusEffect(
+    React.useCallback(() => {
+      // Force status bar style when this screen is focused
+      StatusBar.setBarStyle('light-content');
+    }, [])
+  );
 
   useEffect(() => {
     fetchBlockchainData();
   }, []);
 
-  const StatCard = ({ title, value, icon, color }) => (
-    <View style={[styles.statCard, { borderLeftColor: color }]}>
-      <Ionicons name={icon} size={24} color={color} style={styles.statIcon} />
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statTitle}>{title}</Text>
-    </View>
-  );
+  const modules = [
+    {
+      icon: 'play-circle-outline',
+      title: 'Mine Your First Block',
+      subtitle: 'Experience proof-of-work mining',
+      colors: ['#22c55e', '#16a34a'],
+      progress: null,
+      onPress: () => {},
+    },
+    {
+      icon: 'git-network-outline',
+      title: 'Build a Network',
+      subtitle: 'Connect nodes and sync blockchain',
+      colors: ['#60a5fa', '#06b6d4'],
+      progress: 30,
+      onPress: () => {},
+    },
+    {
+      icon: 'eye-outline',
+      title: 'Block Explorer',
+      subtitle: 'Dive deep into blockchain data',
+      colors: ['#a855f7', '#6366f1'],
+      progress: 70,
+      onPress: () => {},
+    },
+    {
+      icon: 'bookmark-outline',
+      title: 'Consensus Challenge',
+      subtitle: 'Resolve network conflicts',
+      colors: ['#fb923c', '#ef4444'],
+      progress: 100,
+      onPress: () => {},
+    },
+  ];
 
-  const ActionButton = ({ title, onPress, icon, color, disabled = false }) => (
-    <TouchableOpacity 
-      style={[styles.actionButton, { 
-        backgroundColor: disabled ? '#CCCCCC' : color 
-      }]} 
-      onPress={onPress}
-      disabled={disabled}
-    >
-      <Ionicons name={icon} size={20} color="white" style={styles.actionIcon} />
-      <Text style={styles.actionText}>{title}</Text>
-    </TouchableOpacity>
-  );
+  const navigationTabs = [
+    { icon: 'home-outline', label: 'Homeee', id: 'home' },
+    { icon: 'paper-plane-outline', label: 'Explore', id: 'explore' },
+  ];
 
   return (
-    <ScrollView 
-      style={styles.container}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={fetchBlockchainData}
-          colors={['#007AFF']}
-          tintColor="#007AFF"
-        />
-      }
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>ChainLite</Text>
-        <Text style={styles.subtitle}>Your Personal Blockchain</Text>
-      </View>
-
-      <View style={styles.statsContainer}>
-        <StatCard 
-          title="Blocks" 
-          value={blockchainInfo.chainLength} 
-          icon="cube" 
-          color="#007AFF" 
-        />
-        <StatCard 
-          title="Pending Tx" 
-          value={blockchainInfo.pendingTransactions} 
-          icon="swap-horizontal" 
-          color="#34C759" 
-        />
-        <StatCard 
-          title="Nodes" 
-          value={blockchainInfo.nodes} 
-          icon="globe" 
-          color="#FF9500" 
-        />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.actionsContainer}>
-          <ActionButton
-            title="Send"
-            icon="arrow-up"
-            color="#FF3B30"
-            onPress={() => navigateTo('CreateTransaction')}
+    <View style={styles.container}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={fetchBlockchainData}
+            colors={['#3b82f6']}
+            tintColor="#3b82f6"
           />
-          <ActionButton
-            title="Receive"
-            icon="arrow-down"
-            color="#34C759"
-            onPress={() => navigateTo('Wallet')}
-          />
-          <ActionButton
-            title={isMining ? 'Mining...' : 'Mine'}
-            icon="hammer"
-            color="#5856D6"
-            onPress={handleMineBlock}
-            disabled={isMining}
-          />
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Latest Block</Text>
-        {blockchainInfo.lastBlock ? (
-          <View style={styles.blockCard}>
-            <Text style={styles.blockHash} numberOfLines={1} ellipsizeMode="middle">
-              Hash: {blockchainInfo.lastBlock.hash}
-            </Text>
-            <View style={styles.blockInfo}>
-              <Text style={styles.blockInfoText}>
-                Index: {blockchainInfo.lastBlock.index}
-              </Text>
-              <Text style={styles.blockInfoText}>
-                Transactions: {blockchainInfo.lastBlock.transactions?.length || 0}
-              </Text>
-            </View>
-            <Text style={styles.blockTimestamp}>
-              {new Date(blockchainInfo.lastBlock.timestamp).toLocaleString()}
-            </Text>
+        }
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.title}>ChainLiteeee</Text>
+            <Text style={styles.subtitle}>Learn Blockchain Interactively</Text>
           </View>
-        ) : (
-          <Text style={styles.noData}>No blocks found. Start by mining the first block!</Text>
-        )}
+          <TouchableOpacity style={styles.notificationButton}>
+            <Ionicons name="notifications-outline" size={24} color="#9ca3af" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Stats Cards */}
+        <View style={styles.statsRow}>
+          <View style={[styles.statCard, styles.statCardGreen]}> 
+            <Ionicons name="cube-outline" size={28} color="#22c55e" style={styles.statIcon} />
+            <Text style={styles.statValue}>{blockchainInfo.chainLength.toLocaleString()}</Text>
+            <Text style={styles.statLabel}>LIVE Blocks Mineeee</Text>
+          </View>
+          <View style={[styles.statCard, styles.statCardBlue]}> 
+            <Ionicons name="people-outline" size={28} color="#3b82f6" style={styles.statIcon} />
+            <Text style={styles.statValue}>{blockchainInfo.nodes}</Text>
+            <Text style={styles.statLabel}>Active Network Nodes</Text>
+          </View>
+        </View>
+
+        {/* Interactive Learning */}
+        <Text style={styles.sectionTitle}>Interactive Learning</Text>
+        <View style={styles.modulesContainer}>
+          {modules.map((m, idx) => (
+            <View key={idx} style={{ marginBottom: 18 }}>
+              <ModuleCard
+                colors={m.colors}
+                icon={m.icon}
+                title={m.title}
+                subtitle={m.subtitle}
+                onPress={m.onPress}
+                progress={m.progress ?? undefined}
+              />
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+
+      {/* Bottom Navigation */}
+      <View style={styles.bottomNav}>
+        {navigationTabs.map(tab => (
+          <TouchableOpacity
+            key={tab.id}
+            style={styles.navItem}
+            onPress={() => setActiveTab(tab.id)}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name={tab.icon}
+              size={24}
+              color={activeTab === tab.id ? '#0891b2' : '#94a3b8'}
+            />
+            <Text style={[styles.navLabel, activeTab === tab.id && styles.activeNavLabel]}>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f7',
+    backgroundColor: '#0F172A', // Match the dark theme background
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100, // Space for bottom nav
   },
   header: {
-    padding: 25,
-    backgroundColor: '#007AFF',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 5,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
-  },
-  statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    marginBottom: 20,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 50,
+    paddingBottom: 20,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#ffffff',
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: '#9ca3af',
+    marginTop: 2,
+    fontWeight: '400',
+  },
+  notificationButton: {
+    padding: 8,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: 20,
+    marginBottom: 30,
   },
   statCard: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#312e81', // Darker card background
     borderRadius: 12,
-    padding: 15,
-    marginHorizontal: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    borderLeftWidth: 4,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    marginHorizontal: 6,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  statCardGreen: {
+    borderColor: '#22c55e',
+  },
+  statCardBlue: {
+    borderColor: '#3b82f6',
   },
   statIcon: {
-    marginBottom: 5,
+    marginBottom: 12,
   },
   statValue: {
     fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 2,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginBottom: 4,
   },
-  statTitle: {
+  statLabel: {
     fontSize: 12,
-    color: '#666',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  section: {
-    marginBottom: 20,
-    paddingHorizontal: 15,
+    color: '#9ca3af',
+    textAlign: 'center',
+    fontWeight: '500',
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 15,
-    color: '#333',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginLeft: 20,
+    marginBottom: 20,
+    marginTop: 8,
+    letterSpacing: -0.5,
   },
-  actionsContainer: {
+  modulesContainer: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+  },
+  bottomNav: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 5,
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(14px)',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    height: 80,
+    paddingBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 10,
   },
-  actionButton: {
+  navItem: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 12,
-    borderRadius: 10,
-    marginHorizontal: 5,
+    paddingVertical: 8,
   },
-  actionIcon: {
-    marginRight: 8,
-  },
-  actionText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  blockCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  blockHash: {
-    fontFamily: 'monospace',
-    fontSize: 14,
-    marginBottom: 10,
-    color: '#333',
-  },
-  blockInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  blockInfoText: {
-    color: '#666',
-    fontSize: 14,
-  },
-  blockTimestamp: {
+  navLabel: {
     fontSize: 12,
-    color: '#999',
-    fontStyle: 'italic',
+    color: '#94a3b8',
+    marginTop: 4,
+    fontWeight: '500',
   },
-  noData: {
-    textAlign: 'center',
-    color: '#999',
-    marginVertical: 20,
-    fontStyle: 'italic',
+  activeNavLabel: {
+    color: '#0891b2',
+    fontWeight: '600',
   },
 });
 

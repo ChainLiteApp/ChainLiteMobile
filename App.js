@@ -1,7 +1,8 @@
-import React from 'react';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
-import { StatusBar } from 'expo-status-bar';
+import { View, Platform, StatusBar as RNStatusBar } from 'react-native';
+import CustomStatusBar from './components/CustomStatusBar';
+import React from 'react';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { WalletProvider } from './src/contexts/WalletContext';
 import AppNavigator from './src/navigation/AppNavigator';
 
@@ -9,10 +10,21 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <WalletProvider>
-        <NavigationContainer>
-          <StatusBar style="auto" />
-          <AppNavigator />
-        </NavigationContainer>
+        <SafeAreaView 
+          style={{ 
+            flex: 1, 
+            backgroundColor: '#0F172A',
+            paddingTop: Platform.OS === 'android' ? RNStatusBar.currentHeight : 0 
+          }}
+          edges={['top']}
+        >
+          <CustomStatusBar />
+          <View style={{ flex: 1 }}>
+            <NavigationContainer>
+              <AppNavigator />
+            </NavigationContainer>
+          </View>
+        </SafeAreaView>
       </WalletProvider>
     </SafeAreaProvider>
   );

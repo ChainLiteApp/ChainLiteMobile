@@ -4,13 +4,22 @@
     "slug": "ChainLiteMobile",
     "version": "1.0.0",
     "orientation": "portrait",
+    "androidStatusBar": {
+      "barStyle": "light-content",
+      "translucent": true,
+      "backgroundColor": "transparent"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.chainlite.mobile",
+      "statusBar": {
+        "style": "light"
+      }
+    },
     "icon": "./assets/images/icon.png",
     "scheme": "chainlitemobile",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true
-    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
