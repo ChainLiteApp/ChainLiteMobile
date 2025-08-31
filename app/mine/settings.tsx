@@ -53,7 +53,7 @@ export default function MiningSettingsScreen() {
               <TextInput
                 value={apiBaseUrl}
                 onChangeText={setApiBaseUrlState}
-                placeholder="http://127.0.0.1:8000"
+                placeholder="https://chainlite.onrender.com"
                 placeholderTextColor="rgba(255,255,255,0.5)"
                 style={styles.input}
                 autoCapitalize="none"

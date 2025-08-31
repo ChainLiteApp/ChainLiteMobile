@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { getMiningStatus, mineBlock, getWallet } from '@/src/services/blockchain';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -34,29 +34,42 @@ export default function MiningScreen() {
     return () => clearInterval(interval);
   }, [isAnimating]);
 
-  // Poll mining status from backend
-  useEffect(() => {
-    let mounted = true;
-    const poll = async () => {
-      try {
-        const status = await getMiningStatus();
-        if (!mounted) return;
-        setHashRate(Math.floor(status.hashRate || 0));
-        setNonceAttempts(status.nonceAttempts || 0);
-        setDifficulty(status.difficulty ?? null);
-        setIsAnimating(!!status.inProgress);
-        setCurrentBlock(status.lastBlock?.index ?? null);
-      } catch (e) {
-        // ignore
-      }
-    };
-    poll();
-    const id = setInterval(poll, 1000);
-    return () => {
-      mounted = false;
-      clearInterval(id);
-    };
-  }, []);
+  // Poll mining status only while this screen is focused
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const inFlight = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      const poll = async () => {
+        if (inFlight.current || !active) return;
+        inFlight.current = true;
+        try {
+          const status = await getMiningStatus();
+          if (!active) return;
+          setHashRate(Math.floor(status.hashRate || 0));
+          setNonceAttempts(status.nonceAttempts || 0);
+          setDifficulty(status.difficulty ?? null);
+          setIsAnimating(!!status.inProgress);
+          setCurrentBlock(status.lastBlock?.index ?? null);
+        } catch (e) {
+          // ignore errors in polling
+        } finally {
+          inFlight.current = false;
+        }
+      };
+      // prime once immediately and then at interval
+      poll();
+      pollingRef.current = setInterval(poll, 15000);
+      return () => {
+        active = false;
+        if (pollingRef.current) {
+          clearInterval(pollingRef.current);
+          pollingRef.current = null;
+        }
+        inFlight.current = false;
+      };
+    }, [])
+  );
 
   const startMining = async () => {
     try {
@@ -342,3 +355,4 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
+
