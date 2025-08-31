@@ -105,7 +105,7 @@ export default function ExplorerScreen() {
             <View style={styles.blocksScroller}>
               {loading ? (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color="#fffff" />
+                  <ActivityIndicator size="large" color="#ffffff" />
                 </View>
               ) : blocks.length > 0 ? (
                 blocks.map((block) => (

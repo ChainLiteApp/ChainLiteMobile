@@ -1,12 +1,18 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { View, Platform, StatusBar as RNStatusBar } from 'react-native';
 import CustomStatusBar from './components/CustomStatusBar';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { WalletProvider } from './src/contexts/WalletContext';
 import AppNavigator from './src/navigation/AppNavigator';
+import { initializeApiBaseUrl } from './src/services/api/axiosConfig';
 
 export default function App() {
+  useEffect(() => {
+    // Ensure axiosInstance baseURL honors env/secure storage before any calls
+    initializeApiBaseUrl();
+  }, []);
+
   return (
     <SafeAreaProvider>
       <WalletProvider>

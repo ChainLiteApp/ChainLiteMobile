@@ -57,6 +57,28 @@ export default function MiningScreen() {
           inFlight.current = false;
         }
       };
+      const handleMineBlock = async () => {
+        try {
+          const wallet = await getWallet();
+          if (!wallet) {
+            console.error('No wallet found');
+            return;
+          }
+          setIsAnimating(true);
+          await mineBlock(wallet.address);
+          // Refresh status after mining
+          const status = await getMiningStatus();
+          setHashRate(Math.floor(status.hashRate || 0));
+          setNonceAttempts(status.nonceAttempts || 0);
+          setDifficulty(status.difficulty || 0);
+          setCurrentBlock(status.lastBlock?.index || null);
+        } catch (error) {
+          console.error('Error mining block:', error);
+        } finally {
+          setIsAnimating(false);
+          setMiningProgress(0);
+        }
+      };
       // prime once immediately and then at interval
       poll();
       pollingRef.current = setInterval(poll, 15000);
