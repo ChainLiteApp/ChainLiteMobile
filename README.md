@@ -133,11 +133,7 @@ cd android && ./gradlew :app:assembleRelease
 
 > A few representative screens from the app.
 
-![alt text](ChainLite.PNG)
-![alt text](<Latest Blocks.jpeg>)
-![alt text](1542.PNG)
-![alt text](Network.PNG)
-![alt text](IMG_7196.PNG)
+![alt text](image-1.png)
 
 ## Directory structure
 
@@ -147,14 +143,6 @@ cd android && ./gradlew :app:assembleRelease
 - `src/contexts/` — Context providers (e.g., wallet)
 - `utils/` — Utilities
 - `scripts/` — Local test scripts
-
-
-## Screenshots
-![alt text](ChainLite.PNG)
-![alt text](Explorer.PNG)
-![alt text](1542.PNG)
-![alt text](Network.PNG)
-![alt text](IMG_7196.PNG)
 
 ## Performance Notes
 
