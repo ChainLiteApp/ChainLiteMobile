@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, ScrollView, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, FlatList } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '@/components/ui/Header';
@@ -13,128 +13,145 @@ export default function NetworkScreen() {
   const [nodes, setNodes] = useState<string[]>([]);
   const [latestHeight, setLatestHeight] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const load = async () => {
+    try {
+      setLoading(true);
+      const [n, chain] = await Promise.all([getRegisteredNodes(), getChain()]);
+      setNodes(n);
+      setLatestHeight(chain.length ? chain[chain.length - 1].index : null);
+    } catch (e) {
+      console.error('Failed to load network data', e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [n, chain] = await Promise.all([getRegisteredNodes(), getChain()]);
-        setNodes(n);
-        setLatestHeight(chain.length ? chain[chain.length - 1].index : null);
-      } catch (e) {
-        console.error('Failed to load network data', e);
-      } finally {
-        setLoading(false);
-      }
-    };
     load();
   }, []);
 
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await load();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+    <LinearGradient
+      colors={["#0f0a22", "#0f0a22"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
       <LinearGradient
-        colors={["#0f0a22", "#0f0a22"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.container}
-      >
-        <LinearGradient
-          colors={["rgba(122,43,202,0.34)", "rgba(122,43,202,0.0)"]}
-          start={{ x: 1, y: 0 }}
-          end={{ x: 0.2, y: 0.8 }}
-          style={styles.glow}
-          pointerEvents="none"
-        />
+        colors={["rgba(122,43,202,0.34)", "rgba(122,43,202,0.0)"]}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0.2, y: 0.8 }}
+        style={styles.glow}
+        pointerEvents="none"
+      />
+      <FlatList
+        data={[]}
+        keyExtractor={() => 'header'}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + 24 }]}
+        showsVerticalScrollIndicator={false}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        renderItem={() => null}
+        ListHeaderComponent={(
+          <>
+            <Header title="Network" subtitle="Manage your nodes" />
 
-        <View style={[styles.content, { paddingBottom: tabBarHeight + 24 }]}>
-          <Header title="Network" subtitle="Manage your nodes" />
-
-          {/* Network Summary */}
-          <View style={styles.summaryRow}>
-            <View style={[styles.summaryCard, { marginRight: 12 }]}>
-              <View style={styles.summaryTop}>
-                <View style={styles.iconWrap}>
-                  <Ionicons name="server-outline" size={18} color="#60a5fa" />
+            {/* Network Summary */}
+            <View style={styles.summaryRow}>
+              <View style={[styles.summaryCard, { marginRight: 12 }]}>
+                <View style={styles.summaryTop}>
+                  <View style={styles.iconWrap}>
+                    <Ionicons name="server-outline" size={18} color="#60a5fa" />
+                  </View>
+                  <Text style={[styles.status, { color: '#60a5fa' }]}>{'ACTIVE'}</Text>
                 </View>
-                <Text style={[styles.status, { color: '#60a5fa' }]}>{'ACTIVE'}</Text>
+                {loading ? (
+                  <ActivityIndicator color="#60a5fa" />
+                ) : (
+                  <Text style={styles.value}>{nodes.length}</Text>
+                )}
+                <Text style={styles.label}>Nodes Online</Text>
               </View>
-              {loading ? (
-                <ActivityIndicator color="#60a5fa" />
-              ) : (
-                <Text style={styles.value}>{nodes.length}</Text>
-              )}
-              <Text style={styles.label}>Nodes Online</Text>
-            </View>
-            <View style={styles.summaryCard}>
-              <View style={styles.summaryTop}>
-                <View style={styles.iconWrap}>
-                  <Ionicons name="pulse-outline" size={18} color="#22c55e" />
+              <View style={styles.summaryCard}>
+                <View style={styles.summaryTop}>
+                  <View style={styles.iconWrap}>
+                    <Ionicons name="pulse-outline" size={18} color="#22c55e" />
+                  </View>
+                  <Text style={[styles.status, { color: '#22c55e' }]}>{'SYNCED'}</Text>
                 </View>
-                <Text style={[styles.status, { color: '#22c55e' }]}>{'SYNCED'}</Text>
+                {loading ? (
+                  <ActivityIndicator color="#22c55e" />
+                ) : (
+                  <Text style={styles.value}>#{latestHeight ?? '—'}</Text>
+                )}
+                <Text style={styles.label}>Latest Height</Text>
               </View>
-              {loading ? (
-                <ActivityIndicator color="#22c55e" />
-              ) : (
-                <Text style={styles.value}>#{latestHeight ?? '—'}</Text>
-              )}
-              <Text style={styles.label}>Latest Height</Text>
             </View>
-          </View>
 
-          {/* Nodes List */}
-          <Text style={styles.sectionTitle}>Nodes</Text>
-          <View style={styles.nodesList}>
-            {loading ? (
-              <View style={{ padding: 16 }}>
-                <ActivityIndicator color="#a78bfa" />
-              </View>
-            ) : nodes.length === 0 ? (
-              <View style={{ padding: 16 }}>
-                <Text style={{ color: 'rgba(255,255,255,0.8)' }}>No nodes registered</Text>
-              </View>
-            ) : (
-              nodes.map((node) => (
-                <TouchableOpacity
-                  key={node}
-                  style={styles.nodeRow}
-                  activeOpacity={0.9}
-                  onPress={() => router.push({ pathname: '/network/node-details', params: { endpoint: node } })}
-                  >
-                   <View style={[styles.nodeAvatar, { backgroundColor: 'rgba(255,255,255,0.08)' }]}> 
-                     <Ionicons name="cube-outline" size={18} color="#a78bfa" />
-                   </View>
-                   <View style={styles.nodeMain}>
-                     <Text style={styles.nodeTitle}>{node}</Text>
-                     <Text style={styles.nodeSub}>Registered endpoint</Text>
-                   </View>
-                   <View style={styles.nodeRight}>
-                     <View style={[styles.statusDot, { backgroundColor: '#22c55e' }]} />
-                     <Text style={styles.nodeStatus}>Online</Text>
-                     <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.8)" />
-                   </View>
-                 </TouchableOpacity>
-               ))
-             )}
-           </View>
+            {/* Nodes List */}
+            <Text style={styles.sectionTitle}>Nodes</Text>
+            <View style={styles.nodesList}>
+              {loading ? (
+                <View style={{ padding: 16 }}>
+                  <ActivityIndicator color="#a78bfa" />
+                </View>
+              ) : nodes.length === 0 ? (
+                <View style={{ padding: 16 }}>
+                  <Text style={{ color: 'rgba(255,255,255,0.8)' }}>No nodes registered</Text>
+                </View>
+              ) : (
+                nodes.map((node) => (
+                  <TouchableOpacity
+                    key={node}
+                    style={styles.nodeRow}
+                    activeOpacity={0.9}
+                    onPress={() => router.push({ pathname: '/network/node-details', params: { endpoint: node } })}
+                    >
+                     <View style={[styles.nodeAvatar, { backgroundColor: 'rgba(255,255,255,0.08)' }]}> 
+                       <Ionicons name="cube-outline" size={18} color="#a78bfa" />
+                     </View>
+                     <View style={styles.nodeMain}>
+                       <Text style={styles.nodeTitle}>{node}</Text>
+                       <Text style={styles.nodeSub}>Registered endpoint</Text>
+                     </View>
+                     <View style={styles.nodeRight}>
+                       <View style={[styles.statusDot, { backgroundColor: '#22c55e' }]} />
+                       <Text style={styles.nodeStatus}>Online</Text>
+                       <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.8)" />
+                     </View>
+                   </TouchableOpacity>
+                 ))
+               )}
+             </View>
  
-           {/* Add Node CTA */}
-           <TouchableOpacity
-             style={styles.addNodeBtn}
-             activeOpacity={0.95}
-             onPress={() => router.push('/network/add-node')}
-          >
-            <Ionicons name="add" size={18} color="#ffffff" />
-            <Text style={styles.addNodeText}>Add Node</Text>
-          </TouchableOpacity>
-        </View>
-      </LinearGradient>
-    </ScrollView>
+             {/* Add Node CTA */}
+             <TouchableOpacity
+               style={styles.addNodeBtn}
+               activeOpacity={0.95}
+               onPress={() => router.push('/network/add-node')}
+            >
+              <Ionicons name="add" size={18} color="#ffffff" />
+              <Text style={styles.addNodeText}>Add Node</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      />
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    flexGrow: 1,
-  },
   container: {
     flex: 1,
     paddingVertical: 20,

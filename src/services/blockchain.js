@@ -1,3 +1,3 @@
-// Re-export the unified blockchain API explicitly from the TypeScript module
-// to avoid any ambiguity in module resolution between .js and .ts files.
-export * from './blockchain.ts';
+// Re-export the unified blockchain API from the TypeScript module.
+// Use extensionless path so Metro/Bundlers can resolve the appropriate file.
+export * from './blockchain';

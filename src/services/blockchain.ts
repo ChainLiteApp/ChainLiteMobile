@@ -7,7 +7,7 @@ import { Platform } from 'react-native';
 export interface Block {
   index: number;
   timestamp: number;
-  transactions: any[];
+  transactions: Transaction[]; // more specific typing for safer access
   nonce: number;
   hash: string;
   previous_hash: string;
@@ -34,6 +34,8 @@ interface MineResponse {
   nonce: number;
   hash: string;
   previous_hash: string;
+  // Some backends include a mining reward in the response; mark optional to avoid runtime errors
+  reward?: number;
 }
 
 interface RegisterNodeResponse {

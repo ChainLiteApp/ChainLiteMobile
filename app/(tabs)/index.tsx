@@ -5,13 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  View
-} from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 type Module = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -27,10 +22,10 @@ export default function LearnScreen() {
   const router = useRouter();
   const [blocksMined, setBlocksMined] = useState<number>(0);
   const [nodeCount, setNodeCount] = useState<number>(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const mountedRef = useRef(true);
 
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
+  const load = async (mountedRef?: { current: boolean }) => {
       try {
         const [chainLenObj, nodes] = await Promise.all([
           (async () => {
@@ -43,18 +38,30 @@ export default function LearnScreen() {
             return svc.getRegisteredNodes();
           })(),
         ]);
-        if (!mounted) return;
+        if (mountedRef && mountedRef.current === false) return;
         setBlocksMined(chainLenObj.length);
         setNodeCount(nodes?.length ?? 0);
       } catch (e) {
         // keep defaults on failure
       }
     };
-    load();
+
+  useEffect(() => {
+    mountedRef.current = true;
+    load(mountedRef);
     return () => {
-      mounted = false;
+      mountedRef.current = false;
     };
   }, []);
+
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await load();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const modules: Module[] = [
   {
@@ -98,31 +105,39 @@ export default function LearnScreen() {
       end={{ x: 1, y: 1 }}
       style={styles.container}
     >
-      <ScrollView
+      <FlatList
+        data={[]}
+        keyExtractor={() => 'header'}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 24 }]}
         showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <Header title="ChainLite" subtitle="Learn Blockchain Interactively" />
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        renderItem={() => null}
+        ListHeaderComponent={(
+          <>
+            {/* Header */}
+            <Header title="ChainLite" subtitle="Learn Blockchain Interactively" />
 
-        {/* Stats Cards */}
-        <View style={styles.statsRow}>
-          <MetricCard icon="flash-outline" statusLabel="LIVE" statusColor="#22c55e" value={String(blocksMined)} label="Blocks Mined" style={{ marginRight: 12 }} />
-          <MetricCard icon="power-outline" statusLabel="ACTIVE" statusColor="#60a5fa" value={String(nodeCount)} label="Network Nodes" />
-        </View>
-
-        {/* Section Title */}
-        <Text style={styles.sectionTitle}>Interactive Learning</Text>
-
-        {/* Modules */}
-        <View style={styles.modulesContainer}>
-          {modules.map((m, idx) => (
-            <View key={idx}>
-              <ModuleCard density="compact" colors={m.colors} icon={m.icon} title={m.title} subtitle={m.subtitle} progress={m.progress ?? undefined} onPress={m.onPress} />
+            {/* Stats Cards */}
+            <View style={styles.statsRow}>
+              <MetricCard icon="flash-outline" statusLabel="LIVE" statusColor="#22c55e" value={String(blocksMined)} label="Blocks Mined" style={{ marginRight: 12 }} />
+              <MetricCard icon="power-outline" statusLabel="ACTIVE" statusColor="#60a5fa" value={String(nodeCount)} label="Network Nodes" />
             </View>
-          ))}
-        </View>
-      </ScrollView>
+
+            {/* Section Title */}
+            <Text style={styles.sectionTitle}>Interactive Learning</Text>
+
+            {/* Modules */}
+            <View style={styles.modulesContainer}>
+              {modules.map((m, idx) => (
+                <View key={idx}>
+                  <ModuleCard density="compact" colors={m.colors} icon={m.icon} title={m.title} subtitle={m.subtitle} progress={m.progress ?? undefined} onPress={m.onPress} />
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+      />
     </LinearGradient>
   );
 }

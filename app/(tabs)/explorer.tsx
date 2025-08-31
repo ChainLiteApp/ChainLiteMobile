@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import Header from '@/components/ui/Header';
 import { Block, getChain, getLatestBlocks, getPendingTransactions, Transaction } from '@/src/services/blockchain';
@@ -13,6 +13,7 @@ export default function ExplorerScreen() {
   const [pendingTx, setPendingTx] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [chainLength, setChainLength] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadBlockchainData = async () => {
     try {
@@ -37,6 +38,15 @@ export default function ExplorerScreen() {
     loadBlockchainData();
   }, []);
 
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await loadBlockchainData();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const formatTime = (timestamp: number) => {
     const now = Date.now();
     const diff = Math.floor((now - timestamp) / 1000);
@@ -46,116 +56,85 @@ export default function ExplorerScreen() {
   };
 
   return (
-    <View style={styles.pageContainer}>
-      <ScrollView 
+    <LinearGradient
+      colors={["#3D4E81", "#5753C9", "#6E7FF3"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      locations={[0, 0.55, 1]}
+      style={styles.container}
+    >
+      <FlatList
+        data={[]}
+        keyExtractor={() => 'header'}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + 24 }]}
         showsVerticalScrollIndicator={false}
-        style={styles.gradientContainer}
-        contentContainerStyle={styles.scrollContent}
-      >
-          <LinearGradient
-            colors={["#3D4E81", "#5753C9", "#6E7FF3"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            locations={[0, 0.55, 1]}
-            style={styles.container}>
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        renderItem={() => null}
+        ListHeaderComponent={(
+          <>
+            <Header title="Explorer" subtitle="Block Explorer" />
 
-    
-         
-          <View style={[styles.content, { paddingBottom: tabBarHeight + 24 }]}>
-          <Header title="Explorer" subtitle="Block Explorer" />
-
-          {/* Search Bar */}
-          <View style={styles.searchBar}>
-            <Ionicons name="search" size={20} color="rgba(255,255,255,0.9)" />
-            <TextInput
-              placeholder="Search blocks, transactions, addresses..."
-              placeholderTextColor="rgba(255,255,255,0.7)"
-              style={styles.searchInput}
-            />
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Scan QR">
-              <Ionicons name="scan-outline" size={22} color="rgba(255,255,255,0.95)" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Network Stats */}
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{chainLength}</Text>
-              <Text style={styles.statLabel}>Total Blocks</Text>
+            {/* Search Bar */}
+            <View style={styles.searchBar}>
+              <Ionicons name="search" size={20} color="rgba(255,255,255,0.9)" />
+              <TextInput
+                placeholder="Search blocks, transactions, addresses..."
+                placeholderTextColor="rgba(255,255,255,0.7)"
+                style={styles.searchInput}
+              />
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Scan QR">
+                <Ionicons name="scan-outline" size={22} color="rgba(255,255,255,0.95)" />
+              </TouchableOpacity>
             </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{pendingTx.length}</Text>
-              <Text style={styles.statLabel}>Pending Tx</Text>
-            </View>
-          </View>
 
-          {/* Latest Blocks */}
-          <Text style={styles.sectionTitle}>Latest Blocks</Text>
-          <View style={styles.blocksScroller}>
-            {loading ? (
-              <Text style={styles.loadingText}>Loading blocks...</Text>
-            ) : blocks.length > 0 ? (
-              blocks.map((block, i) => (
-                <View key={block.index} style={styles.blockCard}>
-                  <View style={styles.blockHeader}>
-                    <View style={styles.blockBadge}>
-                      <Ionicons name="cube-outline" color="#a78bfa" size={14} />
-                      <Text style={styles.blockBadgeText}>Block</Text>
-                    </View>
-                    <Text style={styles.blockTime}>{formatTime(block.timestamp)}</Text>
-                  </View>
-                  <Text style={styles.blockHeight}>#{block.index}</Text>
-                  <View style={styles.blockMetaRow}>
-                    <Text style={styles.blockMeta}>Tx: {block.transactions.length}</Text>
-                    <Text style={styles.blockMeta}>Nonce: {block.nonce}</Text>
-                  </View>
-                  <Text numberOfLines={1} style={styles.blockMiner}>Hash: {block.hash}</Text>
-                </View>
-              ))
-            ) : (
-              <Text style={styles.emptyText}>No blocks found</Text>
-            )}
-          </View>
-
-          {/* Latest Transactions
-          <Text style={styles.sectionTitle}>Latest Transactions</Text>
-          <View style={styles.txList}>
-            {[...Array(8)].map((_, i) => (
-              <View key={i} style={styles.txRow}>
-                <View style={styles.txIconWrap}>
-                  <Ionicons name="arrow-forward" size={16} color="#60a5fa" />
-                </View>
-                <View style={styles.txMain}>
-                  <Text numberOfLines={1} style={styles.txHash}>0x7f3a83d1b2c4...{i}a9</Text>
-                  <Text style={styles.txSub}>2 min ago • Block #18,245,9{i}1</Text>
-                </View>
-                <View style={styles.txRight}>
-                  <Text style={styles.txValue}>3.12 CLT</Text>
-                  <View style={styles.txStatus}>
-                    <View style={styles.txDot} />
-                    <Text style={styles.txStatusText}>Success</Text>
-                  </View>
-                </View>
+            {/* Network Stats */}
+            <View style={styles.statsRow}>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>{chainLength}</Text>
+                <Text style={styles.statLabel}>Total Blocks</Text>
               </View>
-            ))}
-          </View> */}
-          </View>
-          </LinearGradient>
-      </ScrollView>
-    </View>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>{pendingTx.length}</Text>
+                <Text style={styles.statLabel}>Pending Tx</Text>
+              </View>
+            </View>
+
+            {/* Latest Blocks */}
+            <Text style={styles.sectionTitle}>Latest Blocks</Text>
+            <View style={styles.blocksScroller}>
+              {loading ? (
+                <Text style={styles.loadingText}>Loading blocks...</Text>
+              ) : blocks.length > 0 ? (
+                blocks.map((block) => (
+                  <View key={block.index} style={styles.blockCard}>
+                    <View style={styles.blockHeader}>
+                      <View style={styles.blockBadge}>
+                        <Ionicons name="cube-outline" color="#a78bfa" size={14} />
+                        <Text style={styles.blockBadgeText}>Block</Text>
+                      </View>
+                      <Text style={styles.blockTime}>{formatTime(block.timestamp)}</Text>
+                    </View>
+                    <Text style={styles.blockHeight}>#{block.index}</Text>
+                    <View style={styles.blockMetaRow}>
+                      <Text style={styles.blockMeta}>Tx: {block.transactions.length}</Text>
+                      <Text style={styles.blockMeta}>Nonce: {block.nonce}</Text>
+                    </View>
+                    <Text numberOfLines={1} style={styles.blockMiner}>Hash: {block.hash}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.emptyText}>No blocks found</Text>
+              )}
+            </View>
+          </>
+        )}
+      />
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  pageContainer: {
-    flex: 1,
-  },
-  gradientContainer: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
   container: {
     flex: 1,
     paddingVertical: 20,
