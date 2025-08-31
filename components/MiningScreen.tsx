@@ -1,10 +1,10 @@
+import { getMiningStatus, getWallet, mineBlock } from '@/src/services/blockchain';
 import { Ionicons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { getMiningStatus, mineBlock, getWallet } from '@/src/services/blockchain';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
@@ -266,8 +266,8 @@ const styles = StyleSheet.create({
     borderRadius: 80,
     borderWidth: 6,
     borderColor: 'transparent',
-    borderTopColor: '#7a2bca',
-    borderRightColor: '#7a2bca',
+    borderTopColor: '#14b45a',
+    borderRightColor: '#14b45a',
   },
   progressInner: {
     alignItems: 'center',
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontSize: 14,
-    color: '#a78bfa',
+    color: '#14b45a',
     marginTop: 4,
   },
   statsContainer: {
@@ -323,18 +323,20 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   educationCard: {
-    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 16,
     padding: 16,
     flexDirection: 'row',
     borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   educationIcon: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#3b82f6',
+    // backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: '#14b45a',
+    
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -346,12 +348,13 @@ const styles = StyleSheet.create({
   educationTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#93c5fd',
+    color: 'white',
     marginBottom: 4,
   },
   educationText: {
     fontSize: 14,
-    color: '#bfdbfe',
+    // color: '#c7c9ff',
+    color: '#9ca3af',
     lineHeight: 20,
   },
 });

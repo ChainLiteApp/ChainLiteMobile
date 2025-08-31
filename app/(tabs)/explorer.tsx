@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import Header from '@/components/ui/Header';
 import { Block, getChain, getLatestBlocks, getPendingTransactions, Transaction } from '@/src/services/blockchain';
@@ -104,7 +104,9 @@ export default function ExplorerScreen() {
             <Text style={styles.sectionTitle}>Latest Blocks</Text>
             <View style={styles.blocksScroller}>
               {loading ? (
-                <Text style={styles.loadingText}>Loading blocks...</Text>
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#fffff" />
+                </View>
               ) : blocks.length > 0 ? (
                 blocks.map((block) => (
                   <View key={block.index} style={styles.blockCard}>
@@ -294,6 +296,11 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
     fontWeight: '600',
     paddingVertical: 8,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 24,
   },
   emptyText: {
     color: 'rgba(255,255,255,0.8)',
