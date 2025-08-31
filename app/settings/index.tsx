@@ -52,7 +52,7 @@ export default function SettingsScreen() {
         <TextInput
           value={editUrl}
           onChangeText={setEditUrl}
-          placeholder="http://192.168.x.x:8000"
+          placeholder="https://chainlite.onrender.com"
           placeholderTextColor="rgba(255,255,255,0.5)"
           autoCapitalize="none"
           autoCorrect={false}

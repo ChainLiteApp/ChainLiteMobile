@@ -91,8 +91,8 @@ export interface AddressActivity {
   balance: number;
 }
 
-// Configuration - Update this with your actual server IP
-const API_BASE_URL_DEFAULT = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://127.0.0.1:8000';
+// Configuration - Default to production backend URL; can be overridden via env or in-app settings
+const API_BASE_URL_DEFAULT = 'https://chainlite.onrender.com';
 const API_BASE_URL_ENV = (process.env as any)?.EXPO_PUBLIC_API_BASE_URL as string | undefined;
 const SECURE_STORE_KEYS = {
   API_BASE_URL: 'api_base_url',
@@ -274,7 +274,7 @@ export const mineBlock = async (minerAddress?: string): Promise<MineResponse> =>
 export const registerNode = async (nodeUrl: string): Promise<RegisterNodeResponse> => {
   try {
     const response = await api.post<RegisterNodeResponse | { data?: RegisterNodeResponse }>(
-      '/nodes/register',
+      '/nodes',
       {
         nodes: [nodeUrl],
       }

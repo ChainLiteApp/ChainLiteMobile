@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import Header from '@/components/ui/Header';
-import { getLatestBlocks, getChain, getPendingTransactions, Block, Transaction } from '@/src/services/blockchain';
+import { Block, getChain, getLatestBlocks, getPendingTransactions, Transaction } from '@/src/services/blockchain';
 
 export default function ExplorerScreen() {
   const tabBarHeight = useBottomTabBarHeight();
@@ -250,19 +250,19 @@ const styles = StyleSheet.create({
   },
   blocksScroller: {
     paddingVertical: 2,
-    padding: 20,
+    paddingHorizontal: 0,  // Remove horizontal padding to align with section title
     gap: 12,
-    flexDirection: 'column',    
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'stretch', // Stretch children to full width
   },
   blockCard: {
     width: '100%',
-    padding: 14,
+    padding: 16,
     borderRadius: 18,
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.12)',
-    marginRight: 12,
+    // Removed marginRight to align with section title
   },
   blockHeader: {
     flexDirection: 'row',

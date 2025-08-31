@@ -1,6 +1,6 @@
 # ChainLite API Examples
 
-This document provides cURL commands to interact with the ChainLite API. The server should be running on `http://127.0.0.1:8000`.
+This document provides cURL commands to interact with the ChainLite API. The production server is available at `https://chainlite.onrender.com`.
 
 ## Request/Response Validation
 
@@ -39,7 +39,7 @@ Most endpoints return data in this structure:
 
 ```bash
 curl -X 'GET' \
-  'http://127.0.0.1:8000/' \
+  'https://chainlite.onrender.com/' \
   -H 'accept: application/json'
 ```
 
@@ -53,7 +53,7 @@ curl -X 'GET' \
 
 ```bash
 curl -X 'POST' \
-  'http://127.0.0.1:8000/transactions' \
+  'https://chainlite.onrender.com/transactions' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -80,14 +80,14 @@ curl -X 'POST' \
 
 ```bash
 curl -X 'GET' \
-  'http://127.0.0.1:8000/mine' \
+  'https://chainlite.onrender.com/mine' \
   -H 'accept: application/json'
 ```
 
 **With custom miner address:**
 ```bash
 curl -X 'GET' \
-  'http://127.0.0.1:8000/mine?miner_address=0xabc123456789' \
+  'https://chainlite.onrender.com/mine?miner_address=0xabc123456789' \
   -H 'accept: application/json'
 ```
 
@@ -111,7 +111,7 @@ Returns full chain from database with each block including:
 
 ```bash
 curl -X 'GET' \
-  'http://127.0.0.1:8000/chain' \
+  'https://chainlite.onrender.com/chain' \
   -H 'accept: application/json'
 ```
 
@@ -141,13 +141,13 @@ curl -X 'GET' \
 
 ```bash
 curl -X 'POST' \
-  'http://127.0.0.1:8000/nodes/register' \
+  'https://chainlite.onrender.com/nodes' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
   "nodes": [
-    "http://127.0.0.1:8002",
-    "http://127.0.0.1:8003"
+    "http://node1:8000",
+    "http://node2:8000"
   ]
 }'
 ```
@@ -158,7 +158,7 @@ Applies consensus algorithm by checking all registered nodes for the longest val
 
 ```bash
 curl -X 'GET' \
-  'http://127.0.0.1:8000/nodes/resolve' \
+  'https://chainlite.onrender.com/nodes/resolve' \
   -H 'accept: application/json'
 ```
 
@@ -186,239 +186,7 @@ curl -X 'GET' \
 }
 ```
 
-## 7. List Nodes
-
-```bash
-curl -X 'GET' \
-  'http://127.0.0.1:8000/nodes' \
-  -H 'accept: application/json'
-```
-
-**Response:**
-```json
-{
-  "data": {
-    "nodes": ["http://127.0.0.1:8002", "http://127.0.0.1:8003"]
-  }
-}
-```
-
-## 8. Unregister Single Node
-
-Remove a specific node from the network.
-
-```bash
-curl -X 'DELETE' \
-  'http://127.0.0.1:8000/nodes/127.0.0.1:8002' \
-  -H 'accept: application/json'
-```
-
-## 9. Unregister Multiple Nodes
-
-```bash
-curl -X 'POST' \
-  'http://127.0.0.1:8000/nodes/unregister' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "nodes": [
-    "http://127.0.0.1:8002",
-    "http://127.0.0.1:8003"
-  ]
-}'
-```
-
-## 10. Get Pending Transactions
-
-Returns all transactions in the mempool that haven't been mined yet.
-
-```bash
-curl -X 'GET' \
-  'http://127.0.0.1:8000/pending_tx' \
-  -H 'accept: application/json'
-```
-
-**Response:**
-```json
-{
-  "transactions": [
-    {
-      "sender": "0xabc123456789",
-      "recipient": "0xdef987654321",
-      "amount": 10.5,
-      "signature": "signed_payload",
-      "timestamp": 1712345678901,
-      "hash": "abc123..."
-    }
-  ]
-}
-```
-
-## 11. Get Wallet Balance
-
-Calculate the balance for a specific address by summing all sent/received transactions.
-
-**Address Validation:** Must match pattern `^0x[a-fA-F0-9]{6,}$`
-
-```bash
-curl -X 'GET' \
-  'http://127.0.0.1:8000/balance/0xabc123456789' \
-  -H 'accept: application/json'
-```
-
-**Response:**
-```json
-{
-  "balance": 25.5
-}
-```
-
-## 12. Get Latest Blocks
-
-Retrieve the most recent blocks from the blockchain.
-
-**Query Parameters:**
-- `limit` (optional): Number of blocks to return (1-100, default: 10)
-
-```bash
-curl -X 'GET' \
-  'http://127.0.0.1:8000/blocks/latest?limit=5' \
-  -H 'accept: application/json'
-```
-
-**Response:**
-```json
-{
-  "data": {
-    "blocks": [
-      {
-        "index": 2,
-        "timestamp": 1712345678901,
-        "transactions": [...],
-        "nonce": 12345,
-        "previous_hash": "000def456...",
-        "hash": "000abc123..."
-      }
-    ]
-  }
-}
-```
-
-## 13. Get Block by Height
-
-Retrieve a specific block by its index/height.
-
-**Path Parameters:**
-- `height`: Block index (integer >= 1)
-
-```bash
-curl -X 'GET' \
-  'http://127.0.0.1:8000/blocks/2' \
-  -H 'accept: application/json'
-```
-
-**Response:** Same format as latest blocks, returns single block or 404 if not found.
-
-## 14. Get Block by Hash
-
-Retrieve a specific block by its SHA-256 hash.
-
-```bash
-curl -X 'GET' \
-  'http://127.0.0.1:8000/blocks/hash/000abc123456789...' \
-  -H 'accept: application/json'
-```
-
-**Response:** Returns single block or 404 if hash not found.
-
-## 15. Get Latest Transactions
-
-Retrieve the most recent confirmed transactions from the database.
-
-**Query Parameters:**
-- `limit` (optional): Number of transactions to return (1-100, default: 20)
-
-```bash
-curl -X 'GET' \
-  'http://127.0.0.1:8000/transactions/latest?limit=10' \
-  -H 'accept: application/json'
-```
-
-**Response:**
-```json
-{
-  "data": {
-    "transactions": [
-      {
-        "sender": "0xabc123456789",
-        "recipient": "0xdef987654321",
-        "amount": 10.5,
-        "signature": "signed_payload",
-        "timestamp": 1712345678901,
-        "hash": "abc123...",
-        "block_index": 2
-      }
-    ]
-  }
-}
-```
-
-## 16. Get Transaction by Hash
-
-Search for a transaction by its SHA-256 hash in both pending and confirmed transactions.
-
-```bash
-curl -X 'GET' \
-  'http://127.0.0.1:8000/transactions/abc123456789...' \
-  -H 'accept: application/json'
-```
-
-**Response:** Returns single transaction object or 404 if not found.
-
-## 17. Get Transactions for Address
-
-Retrieve all transactions where the address is either sender or recipient.
-
-**Path Parameters:**
-- `address`: Valid hex address (`^0x[a-fA-F0-9]{6,}$`)
-
-**Query Parameters:**
-- `limit` (optional): Number of transactions (1-100, default: 20)
-- `before` (optional): Return transactions before this timestamp (epoch ms)
-
-```bash
-curl -X 'GET' \
-  'http://127.0.0.1:8000/address/0xabc123456789/transactions?limit=15&before=1712345678901' \
-  -H 'accept: application/json'
-```
-
-**Response:** Same format as latest transactions, filtered by address.
-
-## 18. Mining Status
-
-Returns current mining metrics and status information.
-
-```bash
-curl -X 'GET' \
-  'http://127.0.0.1:8000/mining/status' \
-  -H 'accept: application/json'
-```
-
-**Response:**
-```json
-{
-  "hashRate": 0,
-  "difficulty": 4,
-  "currentTarget": "0000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-  "nonceAttempts": 0,
-  "inProgress": false,
-  "lastBlock": {
-    "index": 2,
-    "hash": "000abc123...",
-    "timestamp": 1712345678901
-  }
-}
-```
+<!-- Removed legacy/local-only sections to reflect the latest production API surface: List Nodes, Unregister Node(s), Pending Transactions, Balance, Blocks, Latest Transactions, Transaction by Hash, Transactions for Address, Mining Status. -->
 
 ## Testing the API
 
@@ -427,7 +195,7 @@ Here's a sequence of commands to test the basic flow:
 1. **Create a transaction**:
    ```bash
    curl -X 'POST' \
-     'http://127.0.0.1:8000/transactions' \
+    'https://chainlite.onrender.com/transactions' \
      -H 'accept: application/json' \
      -H 'Content-Type: application/json' \
      -d '{
@@ -441,30 +209,26 @@ Here's a sequence of commands to test the basic flow:
 
 2. **Mine a block**:
    ```bash
-   curl -X 'GET' 'http://127.0.0.1:8000/mine'
+   curl -X 'GET' 'https://chainlite.onrender.com/mine'
    ```
 
 3. **View the blockchain**:
    ```bash
-   curl -X 'GET' 'http://127.0.0.1:8000/chain'
+   curl -X 'GET' 'https://chainlite.onrender.com/chain'
    ```
 
 4. **Register a peer node** (if you have another instance running):
    ```bash
-   curl -X 'POST' 'http://127.0.0.1:8000/nodes/register' -H 'Content-Type: application/json' -d '{"nodes":["http://127.0.0.1:8002"]}'
+   curl -X 'POST' 'https://chainlite.onrender.com/nodes' -H 'Content-Type: application/json' -d '{"nodes":["http://node1:8000"]}'
    ```
 
 5. **Resolve conflicts** (if you have multiple nodes):
    ```bash
-   curl -X 'GET' 'http://127.0.0.1:8000/nodes/resolve'
+   curl -X 'GET' 'https://chainlite.onrender.com/nodes/resolve'
    ```
 
 ## Multiple Node Setup
 
 To test the full functionality with multiple nodes, you'll need to:
 
-1. Start the first node (already running on port 8000)
-2. Start additional nodes on different ports (e.g., 8002, 8003)
-3. Register the nodes with each other
-4. Mine blocks on different nodes
-5. Use the consensus algorithm to resolve any conflicts
+1. Ensure additional nodes are reachable (e.g., `http://node1:8000`, `http://node2:8000`).
