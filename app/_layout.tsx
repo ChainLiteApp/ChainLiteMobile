@@ -10,6 +10,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { initializeApiBaseUrl } from '@/src/services/blockchain';
 
 export default function RootLayout() {
+  console.log('root of utils mounted')
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
